@@ -1186,7 +1186,7 @@ Y,TAT,75100
       target: { name: target.name, source_type: target.source_type, protein_length_aa: target.target_protein.length,
         original_dna_length_nt: target.original_dna ? target.original_dna.length : null, warnings: target.warnings },
       candidates: analyses.map((a) => metricRow(a, ranked.indexOf(a) >= 0 ? ranked.indexOf(a) + 1 : "")),
-      comparison_row_count: comparisonRows.length, generated_by: "codon-project/docs/index.html" }, null, 2);
+      comparison_row_count: comparisonRows.length, generated_by: "codon-project/docs/visualization/index.html" }, null, 2);
   }
 
   function renderLocalSection(localAnalyses) {

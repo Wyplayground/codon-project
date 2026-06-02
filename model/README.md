@@ -1,8 +1,11 @@
 # Codon optimization model (planned)
 
-This directory is reserved for **codon optimization model code** and related training or inference utilities for *Aspergillus niger* and related hosts.
+This directory is for **codon optimization model code** and related training or inference utilities for *Aspergillus niger* and related hosts.
 
-The live **candidate review visualization** is published from [`docs/`](../docs/) via GitHub Pages.
+The **candidate review visualization** is published separately at:
+
+- Live: https://wyplayground.github.io/codon-project/visualization/
+- Source: [`docs/visualization/`](../docs/visualization/)
 
 ## Status
 

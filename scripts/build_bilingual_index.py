@@ -1,4 +1,4 @@
-"""Build docs/index.html (English default + Chinese toggle) from the simple deliverable."""
+"""Build docs/visualization/index.html (English default + Chinese toggle) from the simple deliverable."""
 from __future__ import annotations
 
 import re
@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = Path(r"D:/2026/CodonTransformer-main/05_mini_apps/deliverables/基于黑曲霉的密码子可视化交付物/aniger_codon_review_simple.html")
-OUT = ROOT / "docs" / "index.html"
+OUT = ROOT / "docs" / "visualization" / "index.html"
 
 I18N_BLOCK = r'''
   let LANG = "en";
@@ -450,7 +450,7 @@ FUNCTIONS = {
       target: { name: target.name, source_type: target.source_type, protein_length_aa: target.target_protein.length,
         original_dna_length_nt: target.original_dna ? target.original_dna.length : null, warnings: target.warnings },
       candidates: analyses.map((a) => metricRow(a, ranked.indexOf(a) >= 0 ? ranked.indexOf(a) + 1 : "")),
-      comparison_row_count: comparisonRows.length, generated_by: "codon-project/docs/index.html" }, null, 2);
+      comparison_row_count: comparisonRows.length, generated_by: "codon-project/docs/visualization/index.html" }, null, 2);
   }''',
     "renderLocalSection": r'''function renderLocalSection(localAnalyses) {
     if (!localAnalyses.length) return `<h2>${esc(t("h2_local"))}</h2><p class="hint">${esc(t("no_local"))}</p>`;
