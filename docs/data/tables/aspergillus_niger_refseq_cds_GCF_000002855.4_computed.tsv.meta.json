@@ -1,0 +1,10 @@
+{
+  "taxid": 5061,
+  "species": "Aspergillus niger",
+  "assembly": "GCF_000002855.4",
+  "ftp": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/855/GCF_000002855.4_ASM285v2/GCF_000002855.4_ASM285v2_cds_from_genomic.fna.gz",
+  "downloaded_on": "2026-05-14T06:07:50Z",
+  "cds_sequences": 14070,
+  "cds_skipped_length_or_non_acgt": 266,
+  "total_codons_counted": 6071110
+}

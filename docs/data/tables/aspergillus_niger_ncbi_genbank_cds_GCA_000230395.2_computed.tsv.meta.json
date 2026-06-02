@@ -1,0 +1,11 @@
+{
+  "taxid": 5061,
+  "species": "Aspergillus niger",
+  "assembly": "GCA_000230395.2",
+  "ftp": "https://ftp.ncbi.nlm.nih.gov/genomes/genbank/fungi/Aspergillus_niger/latest_assembly_versions/GCA_000230395.2_ASPNI_v3.0/GCA_000230395.2_ASPNI_v3.0_cds_from_genomic.fna.gz",
+  "downloaded_on": "2026-05-14T06:07:50Z",
+  "cds_sequences": 10950,
+  "cds_skipped_length_or_non_acgt": 574,
+  "total_codons_counted": 5062904,
+  "note": "ATCC 1015 ASPNI v3 GenBank assembly; complements RefSeq CBS513 assembly."
+}

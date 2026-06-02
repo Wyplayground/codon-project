@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A. niger codon candidate review (simple)</title>
+  <style>
+    :root {
+      --bg: #f5f7f4;
+      --panel: #ffffff;
+      --panel-soft: #eef3ee;
+      --text: #1f2a24;
+      --muted: #647067;
+      --border: #d6ded5;
+      --accent: #276749;
+      --accent-soft: #dceee5;
+      --ok: #257645;
+      --warn: #9a6700;
+      --bad: #b42318;
+      --bad-soft: #fde8e4;
+      --blue-soft: #e7f0ff;
+      --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    header {
+      padding: 0.95rem 1.25rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { margin: 0; font-size: 1.15rem; font-weight: 650; }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.86rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(290px, 375px) 1fr;
+      min-height: calc(100vh - 74px);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--border); }
+    }
+    aside {
+      padding: 1rem;
+      background: #fbfcfa;
+      border-right: 1px solid var(--border);
+    }
+    main { padding: 1rem; overflow-x: auto; }
+    label {
+      display: block;
+      margin-top: 0.8rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    textarea {
+      width: 100%;
+      min-height: 112px;
+      margin-top: 0.35rem;
+      padding: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      resize: vertical;
+    }
+    input[type="range"] { width: 100%; margin-top: 0.45rem; }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 0.45rem 0.75rem;
+      font-size: 13px;
+    }
+    button:hover { border-color: #aab8aa; background: #f7faf7; }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 650;
+    }
+    button.primary:hover { background: #20583d; }
+    .row { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; }
+    .hint { color: var(--muted); font-size: 12px; margin: 0.45rem 0 0; }
+    .notice {
+      margin: 0.7rem 0;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      font-size: 13px;
+    }
+    .notice.ok { border-color: #a7d8b8; background: #eefaf2; color: var(--ok); }
+    .notice.warn { border-color: #e6cc83; background: #fff8df; color: var(--warn); }
+    .notice.err { border-color: #f0a59c; background: var(--bad-soft); color: var(--bad); }
+    details.help {
+      margin-top: 0.9rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    details.help summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 650;
+      user-select: none;
+    }
+    details.help a { color: var(--accent); }
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .tab.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 650;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    h2 { margin: 0.95rem 0 0.4rem; font-size: 1rem; }
+    h2:first-child { margin-top: 0; }
+    .scroll {
+      overflow: auto;
+      max-height: 480px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+    }
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.data th, table.data td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.data th {
+      position: sticky;
+      top: 0;
+      background: #edf3ed;
+      z-index: 1;
+    }
+    .status-pass { color: var(--ok); font-weight: 650; }
+    .status-fail { color: var(--bad); font-weight: 650; }
+    .status-ref { color: var(--muted); font-weight: 650; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.55rem;
+      margin-bottom: 0.85rem;
+    }
+    .summary-grid div {
+      padding: 0.65rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+    }
+    .summary-grid strong { display: block; font-size: 1.25rem; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.45rem 0 0.7rem;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+    }
+    .swatch { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--border); }
+    .swatch.same { background: #edf1ee; }
+    .swatch.changed { background: var(--blue-soft); }
+    .swatch.rare { background: #fff3c4; }
+    .swatch.bad { background: var(--bad-soft); }
+    .codon-wrap {
+      overflow: auto;
+      max-height: 560px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+    }
+    table.codon-map {
+      border-collapse: collapse;
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    table.codon-map th, table.codon-map td {
+      border: 1px solid var(--border);
+      padding: 3px 5px;
+      text-align: center;
+    }
+    table.codon-map th {
+      position: sticky;
+      top: 0;
+      background: #edf3ed;
+      z-index: 1;
+    }
+    .pos { background: #f1f5f1; font-weight: 700; }
+    .same { background: #edf1ee; color: #6b756e; }
+    .changed { background: var(--blue-soft); color: #1f4e83; }
+    .rare { background: #fff3c4; color: #7a5400; font-weight: 700; }
+    .bad { background: var(--bad-soft); color: var(--bad); font-weight: 700; }
+    .missing { background: #fafafa; color: #a0a0a0; }
+    .local-list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    .local-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      padding: 0.75rem;
+    }
+    .local-item h3 { margin: 0 0 0.25rem; font-size: 0.95rem; }
+    pre.sequence {
+      margin: 0.55rem 0 0;
+      max-height: 170px;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      padding: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f7faf7;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .download-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    code { font-family: var(--mono); font-size: 0.92em; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .lang-toggle { display: flex; align-items: center; gap: 0.35rem; font-size: 13px; }
+    .lang-btn { padding: 0.3rem 0.55rem; border-radius: 6px; }
+    .lang-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 650; }
+    .lang-sep { color: var(--muted); }
+
+  </style>
+</head>
+<body>
+    <header>
+    <div class="header-row">
+      <div><h1 id="headerTitle"></h1><p id="headerSub"></p></div>
+      <div class="lang-toggle">
+        <button type="button" id="btnLangEn" class="lang-btn active">EN</button><span class="lang-sep">|</span>
+        <button type="button" id="btnLangZh" class="lang-btn">中文</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+        <aside>
+      <label for="refText" id="labelRef"></label>
+      <textarea id="refText"></textarea>
+      <label for="candText" id="labelCand"></label>
+      <textarea id="candText"></textarea>
+      <label class="row"><input type="checkbox" id="chkLocal" checked /><span id="chkLocalSpan"></span></label>
+      <details class="help"><summary id="helpSrcTitle"></summary><p id="helpSrcP1"></p><p id="helpSrcP2"></p><p id="helpSrcP3"></p></details>
+      <div class="row" style="margin-top:1rem;"><button type="button" class="primary" id="btnRun"></button></div>
+    </aside>
+
+    <main>
+      <div id="messages"></div>
+            <div class="tabs">
+        <button type="button" class="tab active" data-tab="tabMetrics" id="tabMetrics"></button>
+        <button type="button" class="tab" data-tab="tabCodons" id="tabCodons"></button>
+        <button type="button" class="tab" data-tab="tabLong" id="tabLong"></button>
+        <button type="button" class="tab" data-tab="tabExport" id="tabExport"></button>
+      </div>
+      <section id="tabMetrics" class="panel active"></section>
+      <section id="tabCodons" class="panel"></section>
+      <section id="tabLong" class="panel"></section>
+      <section id="tabExport" class="panel"></section>
+    </main>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+  let LANG = "en";
+  const I18N = {
+    en: {
+      page_title: "A. niger codon candidate review (simple)",
+      header_title: '<i>Aspergillus niger</i> codon candidate review (simple)',
+      header_sub: "Offline single-file HTML. Check that external/manual CDS candidates encode the same protein; compare CSI, GC%, and low-adapted codon %.",
+      label_ref: "Original / target sequence",
+      label_cand: "Candidate sequences",
+      ph_ref: ">linB_original\nATG...TAG",
+      ph_cand: "Multi-FASTA or CSV: name,source,sequence",
+      chk_local: "Generate local reference candidates (fixed seed; not ranked)",
+      help_src_title: "Candidate sources",
+      help_src_p1: "This page does not submit to IDT, GenScript, JCat, etc. Paste FASTA / CSV / plain sequence from vendors here to compare.",
+      help_src_p2: 'Use FASTA headers or CSV <code>source</code> values such as <code>manual</code>, <code>IDT</code>, <code>GenScript</code>, <code>JCat</code>, <code>company_A</code>.',
+      help_src_p3: '<a href="https://www.kazusa.or.jp/codon/" target="_blank" rel="noopener noreferrer">Kazusa Codon Usage</a> table for <i>A. niger</i> taxid 5061 is embedded.',
+      btn_run: "Analyze candidates",
+      tab_metrics: "Metrics & ranking",
+      tab_codons: "Codon map",
+      tab_long: "Per-position table",
+      tab_export: "Export",
+      unit_aa: "aa",
+      unit_nt: "nt",
+      unit_count: "",
+      summary_protein_len: "Target protein length",
+      summary_original_cds: "Original CDS",
+      summary_ext_pass: "External passed",
+      summary_ext_fail: "External failed",
+      not_provided: "N/A",
+      ranking_notice: "Ranking aids screening only: higher <strong>CSI</strong>, then lower <strong>low-adapted codon %</strong>, then <strong>GC%</strong> closer to host coding GC {gc}%; no expression prediction score.",
+      metrics_help_title: "CSI, GC%, low-adapted %, errors, warnings, status",
+      metrics_help_csi: "<strong>CSI (codon adaptation index)</strong> measures how closely the CDS matches <i>A. niger</i> preferred codons (geometric mean of relative adaptiveness; M, W, and stop codons skipped).",
+      metrics_help_gc: "<strong>GC%</strong> is the fraction of G+C bases in the DNA sequence.",
+      metrics_help_low: "<strong>Low-adapted codon %</strong> is the fraction of coding codons whose relative adaptiveness is strictly below the threshold (stop codons excluded). The threshold affects this metric and heatmap coloring only, not CSI or GC%.",
+      metrics_help_errors: "<strong>errors</strong> are hard failures (invalid bases, length, internal stops, translation mismatch, etc.). Any error means <strong>failed</strong>.",
+      metrics_help_warnings: "<strong>warnings</strong> are reminders (e.g. start not ATG). Warnings alone still allow <strong>pass</strong> if errors are empty.",
+      metrics_help_status: "<strong>status</strong> for external candidates: <strong>Pass</strong> only if errors are empty and translated protein matches the target exactly.",
+      h2_external_rank: "External / manual candidate ranking",
+      hint_external_rank: "Only candidates that passed validation (no errors; protein match).",
+      no_external_pass: "No external candidates passed translation consistency checks.",
+      h2_reference: "Original sequence baseline",
+      hint_no_dna_baseline: "Target entered as protein only; no original DNA baseline.",
+      h2_external_fail: "Failed external candidates",
+      h2_local: "Program-generated reference candidates (not ranked)",
+      hint_local: "Generated from the embedded <i>A. niger</i> frequency table for local reproducible reference; not a guarantee of highest expression.",
+      no_local: "No local reference candidates were generated.",
+      h2_codon_map: "Per-position codon map",
+      codon_map_notice: "Each row is one amino-acid/codon position; each column is one sequence. Cell values are 3 bp codons. Up to 360 positions shown.",
+      label_threshold: "Low-adapted codon threshold",
+      hint_slider: "Moving the slider updates rare coloring here and low-adapted % on the Metrics tab.",
+      threshold_help_title: "What is the low-adapted codon threshold?",
+      threshold_help_p1: "<strong>Relative adaptiveness</strong> = codon frequency ÷ highest synonymous frequency for that amino acid (0–1).",
+      threshold_help_p2: "Codons with relative adaptiveness <strong>strictly below</strong> the threshold count as low-adapted/rare.",
+      legend_same: "Same as original",
+      legend_changed: "Synonymous change",
+      legend_rare: "Relative adaptiveness below {t}",
+      legend_bad: "Non-synonymous / error",
+      no_heatmap: "No passing sequences available for per-position comparison.",
+      h2_long: "Per-position detail (export)",
+      long_notice: 'Long table: one row per candidate × position. <code>relative_adaptiveness</code> = codon freq / max synonymous freq; <code>rare</code> = below threshold; <code>gc3</code> = third base G or C.',
+      long_truncated: "Showing first 5000 rows only; export CSV for the full table.",
+      h2_export: "Export",
+      export_notice: "Candidate metrics CSV is enabled. Other export buttons are reserved for a future release.",
+      btn_metrics_csv: "Candidate metrics CSV",
+      btn_detail_csv: "Per-position CSV",
+      btn_json: "JSON report",
+      btn_fasta_ext: "Passed external FASTA",
+      btn_fasta_local: "Local reference FASTA",
+      btn_future: "Coming in a later version",
+      no_data: "(no data)",
+      status_ref: "Original baseline",
+      status_local_ok: "Local reference",
+      status_local_bad: "Local error",
+      status_pass: "Pass",
+      status_fail: "Fail",
+      col_rank: "rank", col_name: "name", col_source: "source", col_status: "status",
+      col_len_nt: "len_nt", col_codon_count: "codon_count", col_csi: "CSI", col_gc: "GC%",
+      col_low_adapted: "Low-adapted codon %", col_gc3: "GC3%", col_errors: "errors", col_warnings: "warnings",
+      col_note: "note", col_included: "included_in_ranking", col_is_local: "is_local_reference",
+      col_position: "position", col_amino_acid: "amino_acid", col_candidate: "candidate", col_codon: "codon",
+      col_reference_codon: "reference_codon", col_same_as_reference: "same_as_reference",
+      col_synonymous: "synonymous_with_target", col_host_frequency: "host_frequency",
+      col_relative_adaptiveness: "relative_adaptiveness", col_rare: "rare", col_gc3_flag: "gc3",
+      heat_position: "position", heat_aa: "AA", heat_original: "original",
+      msg_target_ok: "Target protein {aa} aa; {cds}",
+      msg_target_protein_only: "Target entered as protein",
+      msg_original_cds: "Original CDS {nt} nt",
+      local_note_hfc: "Highest-frequency synonymous codon per amino acid; often high CSI but may skew GC/GC3.",
+      local_note_weighted: "Frequency-weighted random codons (fixed seed 42 for reproducibility).",
+      local_note_balanced: "Balance relative adaptiveness with coding GC {gc}% and GC3 {gc3}%; reference only, not an expression guarantee.",
+      err_no_ref: "No original/target sequence provided.",
+      err_empty_ref: "Original/target sequence is empty.",
+      err_invalid_ref_cds: "Invalid original CDS: {detail}",
+      err_ref_internal_stop: "Original CDS contains an internal stop codon.",
+      err_protein_internal_stop: "Target protein contains an internal stop symbol.",
+      err_not_dna_or_protein: "Target is neither standard DNA nor standard protein: {chars}",
+      err_invalid_bases: "Non A/C/G/T bases: {chars}",
+      err_len_not_multiple: "Length {len} nt is not a multiple of 3",
+      err_too_short: "Sequence too short to be a CDS",
+      warn_start_not_atg: "Start codon is {codon}, not ATG",
+      err_or_warn_no_stop: "Last codon {codon} is not a stop codon",
+      err_internal_stops: "Internal stop codon(s) at position(s): {pos}",
+      err_unknown_codon: "Unknown codon(s); translation incomplete",
+      err_protein_mismatch: "Translated protein differs from target ({detail})",
+      err_must_be_dna: "Candidate must be a DNA CDS, not a protein sequence",
+      mismatch_len: "target {t} aa, candidate {c} aa",
+      mismatch_pos: "position {i}: target {t}, candidate {c}",
+      mismatch_unknown: "unknown difference",
+      json_scoring_note: "External ranking: higher CSI, lower low-adapted %, GC% closer to host coding GC; no combined expression score."
+    },
+    zh: {
+      page_title: "黑曲霉密码子候选评审（简化版）",
+      header_title: "黑曲霉（<i>Aspergillus niger</i>）密码子候选评审：简化版",
+      header_sub: "离线单文件 HTML。重点审核外部/人工候选 CDS 是否编码同一蛋白，并用 CSI、GC content、低适配密码子比例做简洁比较。",
+      label_ref: "原始/目标序列", label_cand: "候选序列",
+      ph_ref: ">linB_original\nATG...TAG",
+      ph_cand: "支持多条 FASTA，或 CSV：name,source,sequence",
+      chk_local: "生成程序参考候选（固定内部种子，不参与排名）",
+      help_src_title: "候选来源说明",
+      help_src_p1: "本页不自动提交 IDT、GenScript、JCat 等网站。请把网站或基因公司返回的 FASTA / CSV / 纯序列粘贴到上方文本框后统一比较。",
+      help_src_p2: "FASTA header 或 CSV 的 <code>source</code> 列可写 <code>manual</code>、<code>IDT</code>、<code>GenScript</code>、<code>JCat</code>、<code>company_A</code> 等来源标签。",
+      help_src_p3: '<a href="https://www.kazusa.or.jp/codon/" target="_blank" rel="noopener noreferrer">Kazusa Codon Usage</a> 的黑曲霉 taxid 5061 频率表已内嵌。',
+      btn_run: "分析候选",
+      tab_metrics: "指标与排序", tab_codons: "逐位点密码子对照图",
+      tab_long: "逐位点明细表（导出用）", tab_export: "导出",
+      unit_aa: "aa", unit_nt: "nt", unit_count: "条",
+      summary_protein_len: "目标蛋白长度", summary_original_cds: "原始 CDS",
+      summary_ext_pass: "外部候选通过", summary_ext_fail: "外部候选未通过",
+      not_provided: "未提供",
+      ranking_notice: "排序只用于辅助筛选：先按 <strong>CSI</strong> 高低，再按 <strong>低适配密码子%</strong> 低高，最后按 <strong>GC%</strong> 接近黑曲霉编码区 GC {gc}% 的程度排序；不输出综合表达量预测分。",
+      metrics_help_title: "CSI、GC%、低适配密码子%、errors、warnings 与状态列说明",
+      metrics_help_csi: "<strong>CSI（密码子适应指数）</strong>反映整条 CDS 与黑曲霉偏好密码子的接近程度。",
+      metrics_help_gc: "<strong>GC%</strong>为整条 DNA 序列中 G 与 C 所占比例。",
+      metrics_help_low: "<strong>低适配密码子%</strong>为相对适应度严格小于阈值的编码密码子所占比例；终止密码子不计入。",
+      metrics_help_errors: "<strong>errors</strong>为硬错误信息列表。只要存在任一条 error，该候选即<strong>未通过</strong>。",
+      metrics_help_warnings: "<strong>warnings</strong>为提醒信息。仅有 warnings 而 errors 为空时，仍可通过验证。",
+      metrics_help_status: "<strong>状态</strong>：「通过」当且仅当 errors 为空且翻译蛋白与目标完全一致。",
+      h2_external_rank: "外部/人工候选排序",
+      hint_external_rank: "仅展示已通过验证的候选（无 errors 且翻译与目标蛋白一致）。",
+      no_external_pass: "暂无通过翻译一致性验证的外部候选。",
+      h2_reference: "原始序列基线",
+      hint_no_dna_baseline: "目标以蛋白形式输入，没有原始 DNA 基线。",
+      h2_external_fail: "未通过的外部候选",
+      h2_local: "程序生成参考候选（不参与总体排名）",
+      hint_local: "以下序列由本页根据黑曲霉频率表生成，主要用于本地可复现参考，不代表一定最高表达。",
+      no_local: "未生成本地参考候选。",
+      h2_codon_map: "逐位点密码子对照图",
+      codon_map_notice: "每一行是一个氨基酸/密码子位置，每一列是一条序列。最多显示前 360 个密码子位点。",
+      label_threshold: "低适配密码子阈值",
+      hint_slider: "拖动滑块会实时更新稀有着色，并同步刷新指标页中的低适配密码子%。",
+      threshold_help_title: "什么是低适配密码子阈值？",
+      threshold_help_p1: "相对适应度 = 该密码子频率 ÷ 同氨基酸最高频密码子频率（0～1）。",
+      threshold_help_p2: "相对适应度严格小于阈值的编码密码子计为低适配/稀有。",
+      legend_same: "与原始序列相同", legend_changed: "同义替换",
+      legend_rare: "相对适应度低于 {t}", legend_bad: "非同义/错误位点",
+      no_heatmap: "没有可用于逐位点对照的通过序列。",
+      h2_long: "逐位点明细表（导出用）",
+      long_notice: "每一行对应某条候选序列 × 某个密码子位置。",
+      long_truncated: "页面仅显示前 5000 行，请导出 CSV 查看全部。",
+      h2_export: "导出",
+      export_notice: "当前版本只开放候选指标 CSV 下载。",
+      btn_metrics_csv: "候选指标 CSV", btn_detail_csv: "逐位点明细 CSV",
+      btn_json: "JSON 报告", btn_fasta_ext: "通过外部候选 FASTA", btn_fasta_local: "本地参考候选 FASTA",
+      btn_future: "后续版本启用", no_data: "（无数据）",
+      status_ref: "原始基线", status_local_ok: "本地参考", status_local_bad: "本地异常",
+      status_pass: "通过", status_fail: "未通过",
+      col_rank: "rank", col_name: "name", col_source: "source", col_status: "status",
+      col_len_nt: "len_nt", col_codon_count: "codon_count", col_csi: "CSI", col_gc: "GC%",
+      col_low_adapted: "低适配密码子%", col_gc3: "GC3%", col_errors: "errors", col_warnings: "warnings",
+      col_note: "note", col_included: "included_in_ranking", col_is_local: "is_local_reference",
+      col_position: "position", col_amino_acid: "amino_acid", col_candidate: "candidate", col_codon: "codon",
+      col_reference_codon: "reference_codon", col_same_as_reference: "same_as_reference",
+      col_synonymous: "synonymous_with_target", col_host_frequency: "host_frequency",
+      col_relative_adaptiveness: "relative_adaptiveness", col_rare: "rare", col_gc3_flag: "gc3",
+      heat_position: "position", heat_aa: "AA", heat_original: "original",
+      msg_target_ok: "目标蛋白 {aa} aa；{cds}",
+      msg_target_protein_only: "目标以蛋白形式输入",
+      msg_original_cds: "原始 CDS {nt} nt",
+      local_note_hfc: "每个氨基酸选黑曲霉频率表中最高频的同义密码子，通常 CSI 较高，但可能让 GC/GC3 偏向单一。",
+      local_note_weighted: "按黑曲霉同义密码子频率抽样生成，固定内部种子 42 保证每次结果一致。",
+      local_note_balanced: "在相对适应度、黑曲霉编码区 GC {gc}% 和 GC3 {gc3}% 之间折中；仅供参考，不是表达量保证。",
+      err_no_ref: "没有提供原始/目标序列。", err_empty_ref: "原始/目标序列为空。",
+      err_invalid_ref_cds: "原始 CDS 无效：{detail}", err_ref_internal_stop: "原始 CDS 含内部终止密码子。",
+      err_protein_internal_stop: "目标蛋白序列含内部终止符号。",
+      err_not_dna_or_protein: "目标序列既不是标准 DNA，也不是标准蛋白序列：{chars}",
+      err_invalid_bases: "含非 A/C/G/T 碱基：{chars}",
+      err_len_not_multiple: "长度 {len} nt 不是 3 的倍数", err_too_short: "序列太短，不能作为 CDS",
+      warn_start_not_atg: "起始密码子为 {codon}，不是 ATG",
+      err_or_warn_no_stop: "末端密码子 {codon} 不是终止密码子",
+      err_internal_stops: "存在内部终止密码子：{pos}",
+      err_unknown_codon: "含未知密码子，无法完整翻译",
+      err_protein_mismatch: "翻译蛋白与目标不一致（{detail}）",
+      err_must_be_dna: "候选必须是 DNA CDS，不能是蛋白序列",
+      mismatch_len: "目标 {t} aa，候选 {c} aa",
+      mismatch_pos: "第 {i} 位：目标 {t}，候选 {c}",
+      mismatch_unknown: "未知差异",
+      json_scoring_note: "外部候选排序按 CSI 高、低适配密码子% 低、GC% 接近黑曲霉编码区 GC 参考值排序；没有输出综合表达量预测分。"
+    }
+  };
+
+  function t(key) {
+    const pack = I18N[LANG] || I18N.en;
+    return pack[key] != null ? pack[key] : (I18N.en[key] || key);
+  }
+  function tf(key, params) {
+    let s = t(key);
+    if (params) for (const [k, v] of Object.entries(params)) s = s.split("{" + k + "}").join(String(v));
+    return s;
+  }
+  function applyStaticI18n() {
+    document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
+    document.title = t("page_title");
+    const map = { headerTitle: "header_title", headerSub: "header_sub", labelRef: "label_ref", labelCand: "label_cand",
+      chkLocalSpan: "chk_local", helpSrcTitle: "help_src_title", helpSrcP1: "help_src_p1", helpSrcP2: "help_src_p2",
+      helpSrcP3: "help_src_p3", btnRun: "btn_run", tabMetrics: "tab_metrics", tabCodons: "tab_codons",
+      tabLong: "tab_long", tabExport: "tab_export" };
+    for (const [id, key] of Object.entries(map)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (key === "header_title" || key.startsWith("help_src_p")) el.innerHTML = t(key);
+      else el.textContent = t(key);
+    }
+    document.getElementById("refText").placeholder = t("ph_ref");
+    document.getElementById("candText").placeholder = t("ph_cand");
+    document.getElementById("btnLangEn").classList.toggle("active", LANG === "en");
+    document.getElementById("btnLangZh").classList.toggle("active", LANG === "zh");
+  }
+  function setLang(lang) {
+    LANG = lang === "zh" ? "zh" : "en";
+    try { localStorage.setItem("codon_review_lang", LANG); } catch (e) {}
+    applyStaticI18n();
+    if (lastRunState) renderFromState(currentLowAdaptedThreshold);
+  }
+  const METRIC_COL_LABEL = { rank: "col_rank", name: "col_name", source: "col_source", status: "col_status",
+    len_nt: "col_len_nt", codon_count: "col_codon_count", CSI: "col_csi", "GC%": "col_gc",
+    low_adapted_pct: "col_low_adapted", errors: "col_errors", warnings: "col_warnings" };
+  const DETAIL_COL_LABEL = { position: "col_position", amino_acid: "col_amino_acid", candidate: "col_candidate",
+    source: "col_source", codon: "col_codon", reference_codon: "col_reference_codon",
+    same_as_reference: "col_same_as_reference", synonymous_with_target: "col_synonymous",
+    host_frequency: "col_host_frequency", relative_adaptiveness: "col_relative_adaptiveness",
+    rare: "col_rare", gc3: "col_gc3_flag", included_in_ranking: "col_included", is_local_reference: "col_is_local" };
+  function tableHtmlLabeled(rows, allowHtml, colLabelMap) {
+    if (!rows.length) return `<p class="hint">${esc(t("no_data"))}</p>`;
+    const keys = Object.keys(rows[0]);
+    const th = keys.map((key) => `<th>${esc(t(colLabelMap[key] || key))}</th>`).join("");
+    const body = rows.map((row) => `<tr>${keys.map((key) => `<td>${allowHtml && key === "status" ? row[key] : esc(row[key])}</td>`).join("")}</tr>`).join("");
+    return `<table class="data"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+  }
+
+
+  const ANIGER_TAXID = 5061;
+  const GENETIC_CODE = 1;
+  const ANIGER_CODING_GC = 53.76;
+  const ANIGER_GC3 = 59.39;
+  const LOCAL_SEED = 42;
+  const DEFAULT_LOW_ADAPTED_THRESHOLD = 0.30;
+  const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
+  const DNA_BASES = new Set("ACGT".split(""));
+  const PROTEIN_ALPHABET = new Set("ACDEFGHIKLMNPQRSTVWY".split(""));
+
+  const EMBEDDED_ANIGER_CSV = `amino_acid,codon,observed_count
+*,TAA,3916
+*,TAG,4444
+*,TGA,5689
+A,GCA,106738
+A,GCC,166685
+A,GCG,105173
+A,GCT,132918
+C,TGC,50889
+C,TGT,35261
+D,GAC,166885
+D,GAT,170550
+E,GAA,151769
+E,GAG,212844
+F,TTC,145663
+F,TTT,78285
+G,GGA,98975
+G,GGC,137915
+G,GGG,77463
+G,GGT,107274
+H,CAC,78227
+H,CAT,75191
+I,ATA,42354
+I,ATC,160337
+I,ATT,102080
+K,AAA,86447
+K,AAG,181722
+L,CTA,54445
+L,CTC,137051
+L,CTG,141009
+L,CTT,94490
+L,TTA,31278
+L,TTG,100325
+M,ATG,134646
+N,AAC,129023
+N,AAT,91080
+P,CCA,80260
+P,CCC,109010
+P,CCG,87312
+P,CCT,93422
+Q,CAA,96611
+Q,CAG,148296
+R,AGA,48671
+R,AGG,46656
+R,CGA,57162
+R,CGC,97559
+R,CGG,68379
+R,CGT,61861
+S,AGC,94652
+S,AGT,64937
+S,TCA,65095
+S,TCC,116511
+S,TCG,85723
+S,TCT,86042
+T,ACA,76029
+T,ACC,130788
+T,ACG,79289
+T,ACT,83396
+V,GTA,42490
+V,GTC,133437
+V,GTG,114235
+V,GTT,89946
+W,TGG,93788
+Y,TAC,104725
+Y,TAT,75100
+`;
+
+  const CODON_TO_AA = {
+    TTT:"F",TTC:"F",TTA:"L",TTG:"L",TCT:"S",TCC:"S",TCA:"S",TCG:"S",
+    TAT:"Y",TAC:"Y",TAA:"*",TAG:"*",TGT:"C",TGC:"C",TGA:"*",TGG:"W",
+    CTT:"L",CTC:"L",CTA:"L",CTG:"L",CCT:"P",CCC:"P",CCA:"P",CCG:"P",
+    CAT:"H",CAC:"H",CAA:"Q",CAG:"Q",CGT:"R",CGC:"R",CGA:"R",CGG:"R",
+    ATT:"I",ATC:"I",ATA:"I",ATG:"M",ACT:"T",ACC:"T",ACA:"T",ACG:"T",
+    AAT:"N",AAC:"N",AAA:"K",AAG:"K",AGT:"S",AGC:"S",AGA:"R",AGG:"R",
+    GTT:"V",GTC:"V",GTA:"V",GTG:"V",GCT:"A",GCC:"A",GCA:"A",GCG:"A",
+    GAT:"D",GAC:"D",GAA:"E",GAG:"E",GGT:"G",GGC:"G",GGA:"G",GGG:"G"
+  };
+
+  /* LOCAL_NOTES via i18n */
+  let currentLowAdaptedThreshold = DEFAULT_LOW_ADAPTED_THRESHOLD;
+  let lastRunState = null;
+
+  function normalizeSeq(s) {
+    return String(s || "").replace(/\ufeff/g, "").replace(/\s+/g, "").toUpperCase().replace(/U/g, "T");
+  }
+
+  function normalizeProtein(s) {
+    return String(s || "").replace(/\s+/g, "").toUpperCase();
+  }
+
+  function splitCodons(dna) {
+    const out = [];
+    for (let i = 0; i < dna.length; i += 3) out.push(dna.slice(i, i + 3));
+    return out;
+  }
+
+  function translateDna(dna) {
+    return splitCodons(dna).map((c) => CODON_TO_AA[c] || "X").join("");
+  }
+
+  function invalidDnaChars(dna) {
+    const bad = new Set();
+    for (const ch of dna) if (!DNA_BASES.has(ch)) bad.add(ch);
+    return [...bad].sort();
+  }
+
+  function loadAnigerTable() {
+    const lines = EMBEDDED_ANIGER_CSV.trim().split(/\n/).filter((l) => l.trim());
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const iAa = header.indexOf("amino_acid");
+    const iCodon = header.indexOf("codon");
+    const iCount = header.indexOf("observed_count");
+    const iFreq = header.indexOf("relative_frequency");
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(",");
+      const aa = parts[iAa].trim().toUpperCase();
+      const codon = parts[iCodon].trim().toUpperCase().replace(/U/g, "T");
+      if (iCount >= 0) rows.push({ aa, codon, count: parseInt(parts[iCount], 10) });
+      else rows.push({ aa, codon, frequency: parseFloat(parts[iFreq]) });
+    }
+    if (iCount >= 0) {
+      const sumByAa = {};
+      for (const row of rows) sumByAa[row.aa] = (sumByAa[row.aa] || 0) + row.count;
+      for (const row of rows) row.frequency = row.count / (sumByAa[row.aa] || 1);
+    }
+    const table = {};
+    for (const row of rows) {
+      if (!table[row.aa]) table[row.aa] = [];
+      table[row.aa].push([row.codon, row.frequency]);
+    }
+    return table;
+  }
+
+  function codonLookup(table) {
+    const lookup = {};
+    for (const aa of Object.keys(table)) {
+      const pairs = table[aa];
+      const maxFreq = Math.max(...pairs.map((p) => p[1]));
+      for (const [codon, frequency] of pairs) {
+        lookup[codon] = {
+          aa,
+          frequency,
+          relative_adaptiveness: maxFreq ? frequency / maxFreq : 0
+        };
+      }
+    }
+    return lookup;
+  }
+
+  function mulberry32(seed) {
+    return function () {
+      let t = (seed += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function sourceFromHeader(header, fallback) {
+    const sourceMatch = header.match(/\bsource=([^\s;|,]+)/i) || header.match(/\bprovider=([^\s;|,]+)/i);
+    if (sourceMatch) return sourceMatch[1];
+    const low = header.toLowerCase();
+    for (const token of ["idt", "genscript", "jcat", "twist", "genewiz", "manual"]) {
+      if (low.includes(token)) return token;
+    }
+    if (low.includes("company")) return "company";
+    return fallback;
+  }
+
+  function parseFasta(text, fallbackSource) {
+    const records = [];
+    let header = null;
+    let chunks = [];
+    function flush() {
+      if (header == null) return;
+      const raw = header.trim() || `sequence_${records.length + 1}`;
+      const name = raw.split(/\s+/)[0] || `sequence_${records.length + 1}`;
+      records.push({
+        name,
+        source: sourceFromHeader(raw, fallbackSource),
+        sequence: normalizeSeq(chunks.join(""))
+      });
+    }
+    for (const line of String(text || "").split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (trimmed.startsWith(">")) {
+        flush();
+        header = trimmed.slice(1);
+        chunks = [];
+      } else {
+        chunks.push(trimmed);
+      }
+    }
+    flush();
+    return records.filter((r) => r.sequence);
+  }
+
+  function splitCsvLine(line) {
+    const out = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"' && quoted && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (ch === '"') {
+        quoted = !quoted;
+      } else if (ch === "," && !quoted) {
+        out.push(cur);
+        cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function parseCsvCandidates(text) {
+    const lines = String(text || "").split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const header = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+    const seqIdx = header.indexOf("sequence");
+    if (seqIdx < 0) return [];
+    const nameIdx = header.indexOf("name") >= 0 ? header.indexOf("name") : header.indexOf("id");
+    const srcIdx = header.indexOf("source") >= 0 ? header.indexOf("source") : header.indexOf("provider");
+    const records = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = splitCsvLine(lines[i]);
+      const sequence = normalizeSeq(cols[seqIdx] || "");
+      if (!sequence) continue;
+      records.push({
+        name: (nameIdx >= 0 && cols[nameIdx] ? cols[nameIdx].trim() : `candidate_${i}`) || `candidate_${i}`,
+        source: (srcIdx >= 0 && cols[srcIdx] ? cols[srcIdx].trim() : "csv") || "csv",
+        sequence
+      });
+    }
+    return records;
+  }
+
+  function parseTextCandidates(text, fallbackSource) {
+    const raw = String(text || "").trim();
+    if (!raw) return [];
+    if (raw.startsWith(">")) return parseFasta(raw, fallbackSource);
+    const csv = parseCsvCandidates(raw);
+    if (csv.length) return csv;
+    const dnaMatches = raw.match(/[ACGTUacgtu]{30,}/g) || [];
+    if (dnaMatches.length > 1) {
+      return dnaMatches.map((seq, idx) => ({
+        name: `${fallbackSource || "candidate"}_${idx + 1}`,
+        source: fallbackSource || "paste",
+        sequence: normalizeSeq(seq)
+      }));
+    }
+    if (dnaMatches.length === 1) {
+      return [{ name: `${fallbackSource || "sequence"}_1`, source: fallbackSource || "paste", sequence: normalizeSeq(dnaMatches[0]) }];
+    }
+    return [{ name: `${fallbackSource || "sequence"}_1`, source: fallbackSource || "paste", sequence: normalizeSeq(raw) }];
+  }
+
+  function makeUniqueRecords(records) {
+    const counts = {};
+    return records.map((rec) => {
+      const baseRaw = String(rec.name || "candidate").trim() || "candidate";
+      const base = baseRaw.replace(/[\r\n,"<>]+/g, "_") || "candidate";
+      counts[base] = (counts[base] || 0) + 1;
+      return {
+        name: counts[base] === 1 ? base : `${base}_${counts[base]}`,
+        source: rec.source || "unknown",
+        sequence: rec.sequence,
+        group: rec.group || "external",
+        note: rec.note || ""
+      };
+    });
+  }
+
+  function validateCdsShape(dna, requireStop) {
+    const errors = []; const warnings = []; const bad = invalidDnaChars(dna);
+    if (bad.length) { errors.push(tf("err_invalid_bases", { chars: bad.join(",") })); return { errors, warnings, hasInvalidBases: true }; }
+    if (dna.length % 3 !== 0) { errors.push(tf("err_len_not_multiple", { len: dna.length })); return { errors, warnings, hasInvalidBases: false }; }
+    if (dna.length < 6) { errors.push(t("err_too_short")); return { errors, warnings, hasInvalidBases: false }; }
+    if (dna.slice(0, 3) !== "ATG") warnings.push(tf("warn_start_not_atg", { codon: dna.slice(0, 3) }));
+    const last = dna.slice(-3);
+    if (!STOP_CODONS.has(last)) { const msg = tf("err_or_warn_no_stop", { codon: last }); if (requireStop) errors.push(msg); else warnings.push(msg); }
+    const codons = splitCodons(dna); const internalStops = [];
+    for (let i = 0; i < codons.length - 1; i++) if (STOP_CODONS.has(codons[i])) internalStops.push(i + 1);
+    if (internalStops.length) errors.push(tf("err_internal_stops", { pos: internalStops.slice(0, 12).join(",") }));
+    return { errors, warnings, hasInvalidBases: false };
+  }
+
+  function buildTarget(records) {
+    if (!records.length) throw new Error(t("err_no_ref"));
+    const record = records[0]; const seq = normalizeSeq(record.sequence);
+    if (!seq) throw new Error(t("err_empty_ref"));
+    const isDna = [...seq].every((ch) => DNA_BASES.has(ch));
+    if (isDna) {
+      const shape = validateCdsShape(seq, false);
+      if (shape.errors.length) throw new Error(tf("err_invalid_ref_cds", { detail: shape.errors.join("; ") }));
+      const protein = translateDna(seq).replace(/\*+$/g, "");
+      if (protein.includes("*")) throw new Error(t("err_ref_internal_stop"));
+      return { name: record.name || "reference", source_type: "dna", original_dna: seq, target_protein: protein, warnings: shape.warnings };
+    }
+    const protein = normalizeProtein(seq).replace(/[\*_]+$/g, "");
+    if (/[\*_]/.test(protein)) throw new Error(t("err_protein_internal_stop"));
+    const bad = [...protein].filter((ch) => !PROTEIN_ALPHABET.has(ch));
+    if (bad.length) throw new Error(tf("err_not_dna_or_protein", { chars: [...new Set(bad)].join(",") }));
+    return { name: record.name || "target_protein", source_type: "protein", original_dna: null, target_protein: protein, warnings: [] };
+  }
+
+  function gcPercent(seq) {
+    if (!seq.length) return 0;
+    let gc = 0;
+    for (const ch of seq) if (ch === "G" || ch === "C") gc++;
+    return (100 * gc) / seq.length;
+  }
+
+  function gcByPosition(dna, pos1) {
+    let bases = "";
+    for (let i = pos1 - 1; i < dna.length; i += 3) bases += dna[i] || "";
+    return gcPercent(bases);
+  }
+
+  function csi(dna, lookup) {
+    const logs = [];
+    for (const codon of splitCodons(dna)) {
+      const aa = CODON_TO_AA[codon];
+      if (aa === "M" || aa === "W" || aa === "*") continue;
+      const item = lookup[codon];
+      if (!item) return NaN;
+      logs.push(Math.log(Math.max(item.relative_adaptiveness, 1e-10)));
+    }
+    if (!logs.length) return NaN;
+    return Math.exp(logs.reduce((a, b) => a + b, 0) / logs.length);
+  }
+
+  function cfdPercent(dna, lookup, threshold) {
+    let rare = 0;
+    let total = 0;
+    for (const codon of splitCodons(dna)) {
+      if (CODON_TO_AA[codon] === "*") continue;
+      total++;
+      const rel = lookup[codon] ? lookup[codon].relative_adaptiveness : 0;
+      if (rel < threshold) rare++;
+    }
+    return total ? (100 * rare) / total : NaN;
+  }
+
+  function computeCoreMetrics(dna, lookup, cfdThreshold) {
+    return { len_nt: dna.length, codon_count: splitCodons(dna).length, CSI: round(csi(dna, lookup), 5),
+      "GC%": round(gcPercent(dna), 3), low_adapted_pct: round(cfdPercent(dna, lookup, cfdThreshold), 3),
+      "GC3%": round(gcByPosition(dna, 3), 3) };
+  }
+
+  function round(value, digits) {
+    if (value == null || Number.isNaN(value)) return null;
+    const p = Math.pow(10, digits);
+    return Math.round(value * p) / p;
+  }
+
+  function firstProteinMismatch(target, observed) {
+    if (target.length !== observed.length) return tf("mismatch_len", { t: target.length, c: observed.length });
+    for (let i = 0; i < target.length; i++) if (target[i] !== observed[i]) return tf("mismatch_pos", { i: i + 1, t: target[i], c: observed[i] });
+    return t("mismatch_unknown");
+  }
+
+  function analyzeRecord(record, targetProtein, lookup, cfdThreshold) {
+    const dna = normalizeSeq(record.sequence); const requireStop = record.group !== "reference";
+    const shape = validateCdsShape(dna, requireStop); const errors = [...shape.errors]; const warnings = [...shape.warnings];
+    let protein = "";
+    if (!shape.hasInvalidBases && dna.length >= 3 && dna.length % 3 === 0) {
+      protein = translateDna(dna).replace(/\*+$/g, "");
+      if (protein.includes("X")) errors.push(t("err_unknown_codon"));
+      if (protein !== targetProtein) errors.push(tf("err_protein_mismatch", { detail: firstProteinMismatch(targetProtein, protein) }));
+    } else if (!errors.length) errors.push(t("err_must_be_dna"));
+    let metrics = {};
+    if (!invalidDnaChars(dna).length && dna.length > 0 && dna.length % 3 === 0) metrics = computeCoreMetrics(dna, lookup, cfdThreshold);
+    const passed = errors.length === 0 && protein === targetProtein;
+    return { name: record.name, source: record.source, group: record.group, dna, protein, passed,
+      included: record.group === "external" && passed, is_local_reference: record.group === "local",
+      note: record.note || "", errors, warnings, metrics };
+  }
+
+  function bestStopCodon(table) {
+    return table["*"].reduce((best, p) => (p[1] > best[1] ? p : best), table["*"][0])[0];
+  }
+
+  function highestFrequencySequence(targetProtein, table) {
+    let out = "";
+    for (const aa of targetProtein) {
+      out += table[aa].reduce((best, p) => (p[1] > best[1] ? p : best), table[aa][0])[0];
+    }
+    return out + bestStopCodon(table);
+  }
+
+  function weightedPick(rng, pairs) {
+    const sum = pairs.reduce((a, p) => a + p[1], 0);
+    let x = rng() * sum;
+    for (const [codon, weight] of pairs) {
+      x -= weight;
+      if (x <= 0) return codon;
+    }
+    return pairs[pairs.length - 1][0];
+  }
+
+  function weightedFrequencySequence(targetProtein, table) {
+    const rng = mulberry32(LOCAL_SEED);
+    let out = "";
+    for (const aa of targetProtein) out += weightedPick(rng, table[aa]);
+    return out + bestStopCodon(table);
+  }
+
+  function balancedSequence(targetProtein, table, lookup) {
+    const rng = mulberry32(LOCAL_SEED + 1009);
+    let out = "";
+    let gcCount = 0;
+    let gc3Count = 0;
+    let ntCount = 0;
+    let codonCount = 0;
+    for (const aa of targetProtein) {
+      const scored = table[aa].map(([codon, frequency]) => {
+        const nextGc = gcCount + (codon.match(/[GC]/g) || []).length;
+        const nextGc3 = gc3Count + (codon[2] === "G" || codon[2] === "C" ? 1 : 0);
+        const nextNt = ntCount + 3;
+        const nextCodons = codonCount + 1;
+        const gcDev = Math.abs((100 * nextGc) / nextNt - ANIGER_CODING_GC) / 100;
+        const gc3Dev = Math.abs((100 * nextGc3) / nextCodons - ANIGER_GC3) / 100;
+        const adapt = lookup[codon].relative_adaptiveness;
+        const score = 0.75 * adapt + 0.10 * frequency - 0.30 * gcDev - 0.65 * gc3Dev + rng() * 0.003;
+        return [score, codon];
+      });
+      scored.sort((a, b) => b[0] - a[0]);
+      const selected = scored[0][1];
+      out += selected;
+      gcCount += (selected.match(/[GC]/g) || []).length;
+      gc3Count += selected[2] === "G" || selected[2] === "C" ? 1 : 0;
+      ntCount += 3;
+      codonCount++;
+    }
+    return out + bestStopCodon(table);
+  }
+
+  function generateLocalCandidates(targetProtein, table, lookup) {
+    const specs = [
+      { name: "local_highest_frequency", source: "local_hfc", seq: highestFrequencySequence(targetProtein, table), key: "local_note_hfc" },
+      { name: "local_weighted_frequency", source: "local_weighted", seq: weightedFrequencySequence(targetProtein, table), key: "local_note_weighted" },
+      { name: "local_balanced_gc_gc3", source: "local_balanced", seq: balancedSequence(targetProtein, table, lookup), key: "local_note_balanced" }
+    ];
+    return specs.map((s) => ({ name: s.name, source: s.source, group: "local", sequence: s.seq,
+      note: s.key === "local_note_balanced" ? tf(s.key, { gc: ANIGER_CODING_GC, gc3: ANIGER_GC3 }) : t(s.key) }));
+  }
+
+  function sortExternalCandidates(analyses) {
+    return analyses.filter((a) => a.group === "external" && a.included).sort((a, b) => {
+      const csiDiff = (b.metrics.CSI ?? 0) - (a.metrics.CSI ?? 0);
+      if (Math.abs(csiDiff) > 1e-12) return csiDiff;
+      const cfdDiff = (a.metrics.low_adapted_pct ?? 100) - (b.metrics.low_adapted_pct ?? 100);
+      if (Math.abs(cfdDiff) > 1e-12) return cfdDiff;
+      const gcA = Math.abs((a.metrics["GC%"] ?? ANIGER_CODING_GC) - ANIGER_CODING_GC);
+      const gcB = Math.abs((b.metrics["GC%"] ?? ANIGER_CODING_GC) - ANIGER_CODING_GC);
+      if (Math.abs(gcA - gcB) > 1e-12) return gcA - gcB;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  function statusLabel(a) {
+    if (a.group === "reference") return `<span class="status-ref">${esc(t("status_ref"))}</span>`;
+    if (a.group === "local") return a.passed ? `<span class="status-ref">${esc(t("status_local_ok"))}</span>` : `<span class="status-fail">${esc(t("status_local_bad"))}</span>`;
+    return a.passed ? `<span class="status-pass">${esc(t("status_pass"))}</span>` : `<span class="status-fail">${esc(t("status_fail"))}</span>`;
+  }
+
+  function metricRow(a, rank) {
+    return { rank: rank || "", name: a.name, source: a.source, status: stripHtml(statusLabel(a)),
+      included_in_ranking: a.included, is_local_reference: a.is_local_reference,
+      len_nt: a.metrics.len_nt || "", codon_count: a.metrics.codon_count || "", CSI: a.metrics.CSI ?? "",
+      "GC%": a.metrics["GC%"] ?? "", low_adapted_pct: a.metrics.low_adapted_pct ?? "",
+      errors: a.errors.join("; "), warnings: a.warnings.join("; "), note: a.note || "" };
+  }
+
+  function stripHtml(html) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
+
+  function displayMetricRow(a, rank) {
+    return { rank: rank || "", name: a.name, source: a.source, status: statusLabel(a),
+      len_nt: a.metrics.len_nt || "", codon_count: a.metrics.codon_count || "", CSI: a.metrics.CSI ?? "",
+      "GC%": a.metrics["GC%"] ?? "", low_adapted_pct: a.metrics.low_adapted_pct ?? "",
+      errors: a.errors.join("; "), warnings: a.warnings.join("; ") };
+  }
+
+  function codonComparisonLong(analyses, targetProtein, table, originalDna, cfdThreshold) {
+    const lookup = codonLookup(table);
+    const codingCodons = targetProtein.length;
+    const hasDisplayedStop = analyses.some((a) => {
+      const codons = splitCodons(a.dna);
+      return codons.length === codingCodons + 1 && STOP_CODONS.has(codons[codingCodons]);
+    });
+    const maxCodons = codingCodons + (hasDisplayedStop ? 1 : 0);
+    const referenceCodons = originalDna ? splitCodons(originalDna) : [];
+    const rows = [];
+    for (const a of analyses) {
+      const codons = splitCodons(a.dna);
+      if (codons.length !== codingCodons && codons.length !== codingCodons + 1) continue;
+      const limit = Math.min(codons.length, maxCodons);
+      for (let pos = 1; pos <= limit; pos++) {
+        const codon = codons[pos - 1];
+        const aa = pos === codingCodons + 1 ? "*" : targetProtein[pos - 1];
+        const refCodon = referenceCodons[pos - 1] || "";
+        const entry = lookup[codon] || {};
+        rows.push({
+          position: pos,
+          amino_acid: aa,
+          candidate: a.name,
+          source: a.source,
+          group: a.group,
+          codon,
+          reference_codon: refCodon,
+          same_as_reference: !!(refCodon && codon === refCodon),
+          synonymous_with_target: CODON_TO_AA[codon] === aa,
+          host_frequency: entry.frequency != null ? round(entry.frequency, 5) : "",
+          relative_adaptiveness: entry.relative_adaptiveness != null ? round(entry.relative_adaptiveness, 5) : "",
+          rare: !!(entry.relative_adaptiveness != null && entry.relative_adaptiveness < cfdThreshold),
+          gc3: codon[2] === "G" || codon[2] === "C",
+          included_in_ranking: a.included,
+          is_local_reference: a.is_local_reference
+        });
+      }
+    }
+    return rows;
+  }
+
+  function renderHeatmap(analyses, comparisonRows, maxPos) {
+    const orderedAnalyses = [...analyses.filter((a) => a.group === "reference"),
+      ...analyses.filter((a) => a.group === "external" && a.passed), ...analyses.filter((a) => a.group === "local" && a.passed)];
+    const names = orderedAnalyses.map((a) => a.name);
+    if (!names.length) return `<p class="notice warn">${esc(t("no_heatmap"))}</p>`;
+    const byPos = {}, aaByPos = {}, refByPos = {};
+    for (const row of comparisonRows) {
+      if (!names.includes(row.candidate)) continue;
+      if (!byPos[row.position]) byPos[row.position] = {};
+      byPos[row.position][row.candidate] = row; aaByPos[row.position] = row.amino_acid; refByPos[row.position] = row.reference_codon || "";
+    }
+    const positions = Object.keys(byPos).map(Number).sort((a, b) => a - b).slice(0, maxPos);
+    const head = names.map((name) => `<th>${esc(name)}</th>`).join("");
+    const body = positions.map((pos) => {
+      const cells = [`<td class="pos">${pos}</td>`, `<td>${esc(aaByPos[pos])}</td>`, `<td>${esc(refByPos[pos])}</td>`];
+      for (const name of names) {
+        const row = byPos[pos] && byPos[pos][name];
+        if (!row) { cells.push(`<td class="missing">-</td>`); continue; }
+        let cls = row.same_as_reference ? "same" : "changed"; if (row.rare) cls = "rare"; if (!row.synonymous_with_target) cls = "bad";
+        cells.push(`<td class="${cls}" title="${esc(`source=${row.source}; relative_adaptiveness=${row.relative_adaptiveness}`)}">${esc(row.codon)}</td>`);
+      }
+      return `<tr>${cells.join("")}</tr>`;
+    }).join("");
+    return `<div class="codon-wrap"><table class="codon-map"><thead><tr><th>${esc(t("heat_position"))}</th><th>${esc(t("heat_aa"))}</th><th>${esc(t("heat_original"))}</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function tableHtml(rows, allowHtml) {
+    if (!rows.length) return `<p class="hint">${esc(t("no_data"))}</p>`;
+    const keys = Object.keys(rows[0]);
+    const th = keys.map((key) => `<th>${esc(key)}</th>`).join("");
+    const body = rows.map((row) => {
+      return `<tr>${keys.map((key) => `<td>${allowHtml && key === "status" ? row[key] : esc(row[key])}</td>`).join("")}</tr>`;
+    }).join("");
+    return `<table class="data"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+  }
+
+  function wrapFasta(name, source, sequence) {
+    const lines = [`>${name} source=${source}`];
+    for (let i = 0; i < sequence.length; i += 70) lines.push(sequence.slice(i, i + 70));
+    return lines.join("\n");
+  }
+
+  function recordsToFasta(records) {
+    return records.map((r) => wrapFasta(r.name, r.source, r.dna || r.sequence)).join("\n") + (records.length ? "\n" : "");
+  }
+
+  function rowsToCsv(rows) {
+    if (!rows.length) return "\ufeff";
+    const fields = [];
+    const seen = new Set();
+    for (const row of rows) {
+      for (const key of Object.keys(row)) {
+        if (!seen.has(key)) {
+          seen.add(key);
+          fields.push(key);
+        }
+      }
+    }
+    const encode = (value) => {
+      const s = value == null ? "" : String(value);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    return "\ufeff" + [fields.join(","), ...rows.map((row) => fields.map((f) => encode(row[f])).join(","))].join("\r\n");
+  }
+
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function reportJson(target, analyses, comparisonRows, cfdThreshold) {
+    const ranked = sortExternalCandidates(analyses);
+    return JSON.stringify({ host: { name: "Aspergillus niger", taxid: ANIGER_TAXID, genetic_code: GENETIC_CODE,
+      kazusa_coding_gc_percent: ANIGER_CODING_GC, kazusa_gc3_percent: ANIGER_GC3 },
+      scoring_note: t("json_scoring_note"), low_adapted_codon_threshold: cfdThreshold,
+      target: { name: target.name, source_type: target.source_type, protein_length_aa: target.target_protein.length,
+        original_dna_length_nt: target.original_dna ? target.original_dna.length : null, warnings: target.warnings },
+      candidates: analyses.map((a) => metricRow(a, ranked.indexOf(a) >= 0 ? ranked.indexOf(a) + 1 : "")),
+      comparison_row_count: comparisonRows.length, generated_by: "codon-project/docs/index.html" }, null, 2);
+  }
+
+  function renderLocalSection(localAnalyses) {
+    if (!localAnalyses.length) return `<h2>${esc(t("h2_local"))}</h2><p class="hint">${esc(t("no_local"))}</p>`;
+    const items = localAnalyses.map((a) => `<article class="local-item"><h3>${esc(a.name)}</h3><p class="hint">${esc(a.note)}</p>
+      <div class="scroll" style="max-height:190px;">${tableHtmlLabeled([displayMetricRow(a, "")], true, METRIC_COL_LABEL)}</div>
+      <pre class="sequence">${esc(wrapFasta(a.name, a.source, a.dna))}</pre></article>`).join("");
+    return `<h2>${esc(t("h2_local"))}</h2><p class="hint">${esc(t("hint_local"))}</p><div class="local-list">${items}</div>`;
+  }
+
+  function renderMetrics(target, analyses, comparisonRows, cfdThreshold) {
+    const ranked = sortExternalCandidates(analyses);
+    const externalFailed = analyses.filter((a) => a.group === "external" && !a.passed);
+    const references = analyses.filter((a) => a.group === "reference");
+    const locals = analyses.filter((a) => a.group === "local");
+    const rankedRows = ranked.map((a, idx) => displayMetricRow(a, idx + 1));
+    const failedRows = externalFailed.map((a) => displayMetricRow(a, ""));
+    const referenceRows = references.map((a) => displayMetricRow(a, ""));
+    document.getElementById("tabMetrics").innerHTML = `
+      <div class="summary-grid">
+        <div><span class="hint">${esc(t("summary_protein_len"))}</span><strong>${target.target_protein.length}</strong><span class="hint">${esc(t("unit_aa"))}</span></div>
+        <div><span class="hint">${esc(t("summary_original_cds"))}</span><strong>${target.original_dna ? target.original_dna.length : esc(t("not_provided"))}</strong><span class="hint">${esc(t("unit_nt"))}</span></div>
+        <div><span class="hint">${esc(t("summary_ext_pass"))}</span><strong>${ranked.length}</strong><span class="hint">${esc(t("unit_count"))}</span></div>
+        <div><span class="hint">${esc(t("summary_ext_fail"))}</span><strong>${externalFailed.length}</strong><span class="hint">${esc(t("unit_count"))}</span></div>
+      </div>
+      <p class="notice">${tf("ranking_notice", { gc: ANIGER_CODING_GC })}</p>
+      <details class="help"><summary>${esc(t("metrics_help_title"))}</summary>
+        <p>${t("metrics_help_csi")}</p><p>${t("metrics_help_gc")}</p><p>${t("metrics_help_low")}</p>
+        <p>${t("metrics_help_errors")}</p><p>${t("metrics_help_warnings")}</p><p>${t("metrics_help_status")}</p></details>
+      <h2>${esc(t("h2_external_rank"))}</h2><p class="hint">${esc(t("hint_external_rank"))}</p>
+      <div class="scroll">${rankedRows.length ? tableHtmlLabeled(rankedRows, true, METRIC_COL_LABEL) : `<p class="notice warn">${esc(t("no_external_pass"))}</p>`}</div>
+      <h2>${esc(t("h2_reference"))}</h2>
+      <div class="scroll">${referenceRows.length ? tableHtmlLabeled(referenceRows, true, METRIC_COL_LABEL) : `<p class="hint">${esc(t("hint_no_dna_baseline"))}</p>`}</div>
+      ${failedRows.length ? `<h2>${esc(t("h2_external_fail"))}</h2><div class="scroll">${tableHtmlLabeled(failedRows, true, METRIC_COL_LABEL)}</div>` : ""}
+      ${renderLocalSection(locals)}`;
+    document.getElementById("tabCodons").innerHTML = `
+      <h2>${esc(t("h2_codon_map"))}</h2><p class="notice">${esc(t("codon_map_notice"))}</p>
+      <label for="codonThresholdSlider">${esc(t("label_threshold"))} <span id="codonThresholdVal">${cfdThreshold.toFixed(2)}</span></label>
+      <input type="range" id="codonThresholdSlider" min="0.05" max="0.80" step="0.05" value="${cfdThreshold.toFixed(2)}" />
+      <p class="hint">${esc(t("hint_slider"))}</p>
+      <details class="help"><summary>${esc(t("threshold_help_title"))}</summary><p>${t("threshold_help_p1")}</p><p>${t("threshold_help_p2")}</p></details>
+      <div class="legend">
+        <span><i class="swatch same"></i>${esc(t("legend_same"))}</span>
+        <span><i class="swatch changed"></i>${esc(t("legend_changed"))}</span>
+        <span><i class="swatch rare"></i>${esc(tf("legend_rare", { t: cfdThreshold.toFixed(2) }))}</span>
+        <span><i class="swatch bad"></i>${esc(t("legend_bad"))}</span></div>
+      ${renderHeatmap(analyses, comparisonRows, 360)}`;
+    document.getElementById("tabLong").innerHTML = `
+      <h2>${esc(t("h2_long"))}</h2><p class="notice">${t("long_notice")}</p>
+      <div class="scroll">${tableHtmlLabeled(comparisonRows.slice(0, 5000), false, DETAIL_COL_LABEL)}${comparisonRows.length > 5000 ? `<p class="notice warn">${esc(t("long_truncated"))}</p>` : ""}</div>`;
+    installThresholdSlider();
+  }
+
+  function renderExports(target, analyses, comparisonRows, cfdThreshold) {
+    const ranked = sortExternalCandidates(analyses);
+    const allMetrics = analyses.map((a) => metricRow(a, ranked.indexOf(a) >= 0 ? ranked.indexOf(a) + 1 : ""));
+    document.getElementById("tabExport").innerHTML = `
+      <h2>${esc(t("h2_export"))}</h2><p class="notice">${esc(t("export_notice"))}</p>
+      <div class="download-row">
+        <button type="button" id="dlMetrics">${esc(t("btn_metrics_csv"))}</button>
+        <button type="button" disabled title="${esc(t("btn_future"))}">${esc(t("btn_detail_csv"))}</button>
+        <button type="button" disabled title="${esc(t("btn_future"))}">${esc(t("btn_json"))}</button>
+        <button type="button" disabled title="${esc(t("btn_future"))}">${esc(t("btn_fasta_ext"))}</button>
+        <button type="button" disabled title="${esc(t("btn_future"))}">${esc(t("btn_fasta_local"))}</button>
+      </div>`;
+    document.getElementById("dlMetrics").onclick = () => downloadText("aniger_simple_metrics.csv", rowsToCsv(allMetrics), "text/csv");
+  }
+
+  function pushMessage(kind, html) {
+    const el = document.createElement("div");
+    el.className = `notice ${kind}`;
+    el.innerHTML = html;
+    document.getElementById("messages").appendChild(el);
+  }
+
+  function renderFromState(cfdThreshold) {
+    if (!lastRunState) return;
+    currentLowAdaptedThreshold = cfdThreshold;
+    const { target, uniqueRecords, table, lookup } = lastRunState;
+    const analyses = uniqueRecords.map((r) => analyzeRecord(r, target.target_protein, lookup, cfdThreshold));
+    const comparisonRows = codonComparisonLong(analyses, target.target_protein, table, target.original_dna, cfdThreshold);
+    renderMetrics(target, analyses, comparisonRows, cfdThreshold);
+    renderExports(target, analyses, comparisonRows, cfdThreshold);
+  }
+
+  function installThresholdSlider() {
+    const slider = document.getElementById("codonThresholdSlider");
+    if (!slider) return;
+    slider.addEventListener("input", () => {
+      const next = parseFloat(slider.value);
+      currentLowAdaptedThreshold = next;
+      const val = document.getElementById("codonThresholdVal");
+      if (val) val.textContent = next.toFixed(2);
+      renderFromState(next);
+    });
+  }
+
+  function run() {
+    document.getElementById("messages").innerHTML = "";
+    const table = loadAnigerTable(); const lookup = codonLookup(table);
+    const refMerged = document.getElementById("refText").value;
+    const candMerged = document.getElementById("candText").value;
+    let target;
+    try { target = buildTarget(parseTextCandidates(refMerged, "reference")); }
+    catch (err) { pushMessage("err", esc(err.message || err)); return; }
+    const cdsPart = target.original_dna ? tf("msg_original_cds", { nt: target.original_dna.length }) : t("msg_target_protein_only");
+    pushMessage("ok", esc(tf("msg_target_ok", { aa: target.target_protein.length, cds: cdsPart })));
+    for (const warning of target.warnings) pushMessage("warn", esc(warning));
+    const records = [];
+    if (target.original_dna) records.push({ name: target.name || "original_reference", source: "original", group: "reference", sequence: target.original_dna });
+    records.push(...parseTextCandidates(candMerged, "manual").map((r) => ({ ...r, group: "external" })));
+    if (document.getElementById("chkLocal").checked) records.push(...generateLocalCandidates(target.target_protein, table, lookup));
+    lastRunState = { target, uniqueRecords: makeUniqueRecords(records), table, lookup };
+    renderFromState(currentLowAdaptedThreshold);
+  }
+
+  document.querySelectorAll(".tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    });
+  });
+
+
+  try { const saved = localStorage.getItem("codon_review_lang"); if (saved === "zh" || saved === "en") LANG = saved; } catch (e) {}
+  document.getElementById("btnLangEn").addEventListener("click", () => setLang("en"));
+  document.getElementById("btnLangZh").addEventListener("click", () => setLang("zh"));
+  applyStaticI18n();
+
+  document.getElementById("btnRun").addEventListener("click", () => {
+    try {
+      run();
+    } catch (err) {
+      pushMessage("err", esc(err.message || err));
+    }
+  });
+})();
+  </script>
+</body>
+</html>

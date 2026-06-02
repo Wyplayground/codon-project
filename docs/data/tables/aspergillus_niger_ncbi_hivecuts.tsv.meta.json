@@ -1,0 +1,8 @@
+{
+  "taxid": 5061,
+  "species": "Aspergillus niger",
+  "assembly": "GCF_000002855.4",
+  "downloaded_on": "2026-05-14T06:07:50Z",
+  "proxy_of_tsv": "aspergillus_niger_refseq_cds_GCF_000002855.4_computed.tsv",
+  "note": "Official hive.biochemistry.gwu.edu CoCoPUTs CGI returned HTTP 403 to this client. CoCoPUTs prioritizes RefSeq when available; this file duplicates the RefSeq `cds_from_genomic` codon totals for GCF_000002855.4. Replace with a UI export from https://dnahive.fda.gov/dna.cgi?cmd=cuts_main if you need vendor-identical CoCoPUTs numbers."
+}

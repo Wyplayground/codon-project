@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>黑曲霉密码子候选评审（离线 HTML）</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --ok: #3fb950;
+      --warn: #d29922;
+      --bad: #f85149;
+      --border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.85rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 0;
+      min-height: calc(100vh - 88px);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    aside {
+      padding: 1rem;
+      border-right: 1px solid var(--border);
+      background: #121922;
+      overflow-y: auto;
+    }
+    main { padding: 1rem; overflow-x: auto; }
+    label { display: block; margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+      resize: vertical;
+    }
+    input[type="file"] { margin-top: 0.35rem; font-size: 12px; }
+    input[type="number"], input[type="range"] { width: 100%; }
+    .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    button.primary {
+      background: #238636;
+      border-color: #238636;
+      color: #fff;
+      font-weight: 600;
+    }
+    button:hover { filter: brightness(1.08); }
+    .tabs { display: flex; gap: 4px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .tabs button {
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    .tabs button.active {
+      border-color: var(--border);
+      background: var(--panel);
+      color: var(--accent);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .msg { padding: 0.6rem 0.75rem; border-radius: 6px; margin: 0.5rem 0; font-size: 13px; }
+    .msg.err { background: rgba(248,81,73,0.12); border: 1px solid var(--bad); }
+    .msg.ok { background: rgba(63,185,80,0.12); border: 1px solid var(--ok); }
+    .msg.warn { background: rgba(210,153,34,0.12); border: 1px solid var(--warn); }
+    table.data {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+      margin-top: 0.5rem;
+    }
+    table.data th, table.data td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.data th { background: var(--panel); position: sticky; top: 0; }
+    .scroll { overflow: auto; max-height: 480px; border: 1px solid var(--border); border-radius: 6px; }
+    .codon-map-wrap {
+      overflow: auto;
+      max-height: 560px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    table.codon-map {
+      border-collapse: collapse;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    table.codon-map th, table.codon-map td {
+      border: 1px solid var(--border);
+      padding: 3px 5px;
+      text-align: center;
+    }
+    table.codon-map th { background: #1a2332; position: sticky; top: 0; z-index: 1; }
+    .codon-map .pos { background: #21262d; font-weight: 600; }
+    .codon-map .same { background: #21262d; color: #8b949e; }
+    .codon-map .changed { background: rgba(88,166,255,0.15); color: #79c0ff; }
+    .codon-map .rare { background: rgba(248,81,73,0.2); color: #ffa198; font-weight: 700; }
+    .codon-map .bad { background: #7d1f1f; color: #fff; }
+    .codon-map .missing { background: #161b22; color: #484f58; }
+    .dl-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    kbd { font-size: 11px; background: var(--panel); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+    .sources-help {
+      margin-top: 1rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sources-help summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 500;
+      user-select: none;
+    }
+    .sources-help a { color: var(--accent); }
+    .sources-help ul { margin: 0.4rem 0 0; padding-left: 1.15rem; line-height: 1.55; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>黑曲霉（<i>Aspergillus niger</i>）密码子候选评审</h1>
+    <p>单文件离线运行：内嵌 Kazusa taxid 5061。支持原始序列 + 多候选 FASTA/CSV/粘贴。无需 Python / Streamlit。</p>
+  </header>
+  <div class="layout">
+    <aside>
+      <label>原始 / 目标（FASTA、纯 DNA 或蛋白序列）</label>
+      <input type="file" id="refFile" accept=".fa,.fasta,.fna,.txt,.csv" />
+      <textarea id="refText" placeholder=">ref&#10;ATG..."></textarea>
+
+      <label>候选序列（可多选文件 + 下方粘贴合并）</label>
+      <input type="file" id="candFiles" multiple accept=".fa,.fasta,.fna,.txt,.csv" />
+      <textarea id="candText" placeholder="多条 FASTA 或 CSV（含 sequence 列）"></textarea>
+
+      <label>CFD 稀有阈值 <span id="cfdVal">0.30</span></label>
+      <input type="range" id="cfdSlider" min="0.05" max="0.8" step="0.05" value="0.3" />
+
+      <label>随机种子（本地加权 / 平衡候选）</label>
+      <input type="number" id="seedInp" value="42" min="0" max="1000000" />
+
+      <label class="row" style="margin-top:0.5rem;">
+        <input type="checkbox" id="chkLocal" checked />
+        <span>生成本地候选（HFC / 加权随机 / GC-GC3 平衡）</span>
+      </label>
+
+      <details class="sources-help">
+        <summary>候选来源与外部链接（本页不自动联网拉序列）</summary>
+        <p style="margin:0.45rem 0 0;">将各站导出的 FASTA / 纯序列 / CSV（含 <code>sequence</code> 列）粘贴或上传到「候选序列」。企业 REST API 需账号与 Token，宜在 Python/后端拉取后再导入；浏览器离线页无法安全直连。</p>
+        <ul>
+          <li><a href="https://www.jcat.de/" target="_blank" rel="noopener noreferrer">JCat</a> — 在线优化；导出后粘贴（真菌宿主请自行核对表是否适用）。</li>
+          <li><a href="https://www.idtdna.com/" target="_blank" rel="noopener noreferrer">IDT</a> — gBlocks 等；订单或网页复制序列。</li>
+          <li><a href="https://www.genscript.com/" target="_blank" rel="noopener noreferrer">GenScript</a> — GenSmart 等；导出 FASTA 或 CSV。</li>
+          <li><a href="https://www.twistbioscience.com/" target="_blank" rel="noopener noreferrer">Twist</a> — 基因合成；账户内下载 FASTA。</li>
+          <li><a href="https://optipyzer.com/" target="_blank" rel="noopener noreferrer">Optipyzer</a> — 多宿主优化（按站点说明导出）。</li>
+          <li><a href="https://www.kazusa.or.jp/codon/" target="_blank" rel="noopener noreferrer">Kazusa Codon Usage</a> — 查物种密码子频率（本页已内嵌 A. niger 5061）。</li>
+        </ul>
+      </details>
+
+      <div class="row" style="margin-top:1rem;">
+        <button type="button" class="primary" id="btnRun">分析</button>
+      </div>
+      <p style="color:var(--muted);font-size:12px;margin-top:1rem;">
+        Excel 可直接打开导出的 CSV（UTF-8）。本页不解析 .xlsx；请另存为 CSV 或 FASTA。
+      </p>
+    </aside>
+    <main>
+      <div id="messages"></div>
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="t1">指标与排名</button>
+        <button type="button" class="tab" data-tab="t2">逐密码子热图</button>
+        <button type="button" class="tab" data-tab="t3">逐密码子长表</button>
+        <button type="button" class="tab" data-tab="t4">导出</button>
+      </div>
+      <div id="t1" class="panel active"></div>
+      <div id="t2" class="panel"></div>
+      <div id="t3" class="panel"></div>
+      <div id="t4" class="panel"></div>
+    </main>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const ANIGER_TAXID = 5061;
+  const GENETIC_CODE = 1;
+  const ANIGER_CODING_GC = 53.76;
+  const ANIGER_GC3 = 59.39;
+  const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
+  const DNA_BASES = new Set("ACGT".split(""));
+  const PROTEIN_ALPHABET = new Set("ACDEFGHIKLMNPQRSTVWY".split(""));
+
+  const EMBEDDED_ANIGER_CSV = `amino_acid,codon,observed_count
+*,TAA,3916
+*,TAG,4444
+*,TGA,5689
+A,GCA,106738
+A,GCC,166685
+A,GCG,105173
+A,GCT,132918
+C,TGC,50889
+C,TGT,35261
+D,GAC,166885
+D,GAT,170550
+E,GAA,151769
+E,GAG,212844
+F,TTC,145663
+F,TTT,78285
+G,GGA,98975
+G,GGC,137915
+G,GGG,77463
+G,GGT,107274
+H,CAC,78227
+H,CAT,75191
+I,ATA,42354
+I,ATC,160337
+I,ATT,102080
+K,AAA,86447
+K,AAG,181722
+L,CTA,54445
+L,CTC,137051
+L,CTG,141009
+L,CTT,94490
+L,TTA,31278
+L,TTG,100325
+M,ATG,134646
+N,AAC,129023
+N,AAT,91080
+P,CCA,80260
+P,CCC,109010
+P,CCG,87312
+P,CCT,93422
+Q,CAA,96611
+Q,CAG,148296
+R,AGA,48671
+R,AGG,46656
+R,CGA,57162
+R,CGC,97559
+R,CGG,68379
+R,CGT,61861
+S,AGC,94652
+S,AGT,64937
+S,TCA,65095
+S,TCC,116511
+S,TCG,85723
+S,TCT,86042
+T,ACA,76029
+T,ACC,130788
+T,ACG,79289
+T,ACT,83396
+V,GTA,42490
+V,GTC,133437
+V,GTG,114235
+V,GTT,89946
+W,TGG,93788
+Y,TAC,104725
+Y,TAT,75100
+`;
+
+  const CODON_TO_AA = {
+    TTT:"F",TTC:"F",TTA:"L",TTG:"L",TCT:"S",TCC:"S",TCA:"S",TCG:"S",
+    TAT:"Y",TAC:"Y",TAA:"*",TAG:"*",TGT:"C",TGC:"C",TGA:"*",TGG:"W",
+    CTT:"L",CTC:"L",CTA:"L",CTG:"L",CCT:"P",CCC:"P",CCA:"P",CCG:"P",
+    CAT:"H",CAC:"H",CAA:"Q",CAG:"Q",CGT:"R",CGC:"R",CGA:"R",CGG:"R",
+    ATT:"I",ATC:"I",ATA:"I",ATG:"M",ACT:"T",ACC:"T",ACA:"T",ACG:"T",
+    AAT:"N",AAC:"N",AAA:"K",AAG:"K",AGT:"S",AGC:"S",AGA:"R",AGG:"R",
+    GTT:"V",GTC:"V",GTA:"V",GTG:"V",GCT:"A",GCC:"A",GCA:"A",GCG:"A",
+    GAT:"D",GAC:"D",GAA:"E",GAG:"E",GGT:"G",GGC:"G",GGA:"G",GGG:"G"
+  };
+
+  const RESTRICTION_SITES = {
+    EcoRI: ["GAATTC"], BamHI: ["GGATCC"], HindIII: ["AAGCTT"], XhoI: ["CTCGAG"],
+    NdeI: ["CATATG"], NcoI: ["CCATGG"], NotI: ["GCGGCCGC"], XbaI: ["TCTAGA"],
+    SpeI: ["ACTAGT"], SalI: ["GTCGAC"], KpnI: ["GGTACC"], ApaI: ["GGGCCC"],
+    PstI: ["CTGCAG"], SmaI: ["CCCGGG"], BsaI: ["GGTCTC", "GAGACC"],
+    BsmBI: ["CGTCTC", "GAGACG"]
+  };
+
+  function mulberry32(a) {
+    return function () {
+      let t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function normalizeSeq(s) {
+    return String(s || "").replace(/\ufeff/g, "").replace(/\s+/g, "").toUpperCase().replace(/U/g, "T");
+  }
+  function normalizeProtein(s) {
+    return String(s || "").replace(/\s+/g, "").toUpperCase().replace(/\*/g, "_").replace(/_+$/, "");
+  }
+  function splitCodons(dna) {
+    const out = [];
+    for (let i = 0; i < dna.length; i += 3) out.push(dna.slice(i, i + 3));
+    return out;
+  }
+  function translateDna(dna) {
+    return splitCodons(dna).map((c) => CODON_TO_AA[c] || "X").join("");
+  }
+  function invalidDnaChars(dna) {
+    const bad = new Set();
+    for (const ch of dna) if (!DNA_BASES.has(ch)) bad.add(ch);
+    return [...bad].sort();
+  }
+
+  function loadAnigerTable() {
+    const lines = EMBEDDED_ANIGER_CSV.trim().split(/\n/).filter((l) => l.trim());
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const iAa = header.indexOf("amino_acid");
+    const iCod = header.indexOf("codon");
+    const iCnt = header.indexOf("observed_count");
+    const iFreq = header.indexOf("relative_frequency");
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const p = lines[i].split(",");
+      const aa = p[iAa].trim().toUpperCase();
+      const codon = p[iCod].trim().toUpperCase().replace(/U/g, "T");
+      if (iCnt >= 0) {
+        rows.push({ aa, codon, cnt: parseInt(p[iCnt], 10) });
+      } else {
+        rows.push({ aa, codon, freq: parseFloat(p[iFreq]) });
+      }
+    }
+    if (iCnt >= 0) {
+      const sumByAa = {};
+      for (const r of rows) sumByAa[r.aa] = (sumByAa[r.aa] || 0) + r.cnt;
+      for (const r of rows) r.freq = r.cnt / (sumByAa[r.aa] || 1);
+    }
+    const table = {};
+    for (const r of rows) {
+      if (!table[r.aa]) table[r.aa] = [];
+      table[r.aa].push([r.codon, r.freq]);
+    }
+    return table;
+  }
+
+  function codonLookup(table) {
+    const lookup = {};
+    for (const aa of Object.keys(table)) {
+      const pairs = table[aa];
+      const maxF = Math.max(...pairs.map((p) => p[1]));
+      for (const [codon, freq] of pairs) {
+        lookup[codon] = {
+          aa,
+          frequency: freq,
+          relative_adaptiveness: maxF ? freq / maxF : 0,
+          host_rscu: freq * pairs.length
+        };
+      }
+    }
+    return lookup;
+  }
+
+  function parseFasta(text, defaultSource) {
+    const records = [];
+    let header = null;
+    let chunks = [];
+    function flush() {
+      if (header === null) return;
+      const rawName = header.trim() || `sequence_${records.length + 1}`;
+      const name = rawName.split(/\s+/)[0];
+      let source = defaultSource;
+      const low = rawName.toLowerCase();
+      for (const p of ["idt", "genscript", "jcat", "twist", "genewiz"]) {
+        if (low.includes(p)) source = p;
+      }
+      records.push({ name, source, sequence: normalizeSeq(chunks.join("")) });
+    }
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t) continue;
+      if (t.startsWith(">")) {
+        flush();
+        header = t.slice(1);
+        chunks = [];
+      } else chunks.push(t);
+    }
+    flush();
+    return records;
+  }
+
+  function parseCsvCandidates(text) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const si = header.indexOf("sequence");
+    if (si < 0) return [];
+    const ni = header.indexOf("name");
+    const ii = header.indexOf("id");
+    const pi = header.indexOf("source");
+    const pri = header.indexOf("provider");
+    const records = [];
+    for (let r = 1; r < lines.length; r++) {
+      const cols = lines[r].split(",");
+      const seq = normalizeSeq(cols[si] || "");
+      if (!seq) continue;
+      const name = (ni >= 0 && cols[ni] ? cols[ni] : ii >= 0 && cols[ii] ? cols[ii] : `candidate_${r}`).trim();
+      const src = (pi >= 0 && cols[pi] ? cols[pi] : pri >= 0 && cols[pri] ? cols[pri] : "csv").trim();
+      records.push({ name, source: src || "csv", sequence: seq });
+    }
+    return records;
+  }
+
+  function parseTextCandidates(text, defaultSource) {
+    text = text.trim();
+    if (!text) return [];
+    if (text.startsWith(">")) return parseFasta(text, defaultSource);
+    const csv = parseCsvCandidates(text);
+    if (csv.length) return csv;
+    const m = text.match(/[ACGTUacgtu]{30,}/g);
+    if (m && m.length) {
+      const longest = m.reduce((a, b) => (a.length >= b.length ? a : b));
+      return [{ name: "embedded_dna", source: defaultSource, sequence: normalizeSeq(longest) }];
+    }
+    return [{ name: "pasted_sequence", source: defaultSource, sequence: normalizeSeq(text) }];
+  }
+
+  function makeUniqueRecords(records) {
+    const counts = {};
+    const out = [];
+    for (const rec of records) {
+      let base = rec.name.replace(/[^A-Za-z0-9_.-]+/g, "_").trim() || "candidate";
+      counts[base] = (counts[base] || 0) + 1;
+      const name = counts[base] === 1 ? base : `${base}_${counts[base]}`;
+      out.push({ name, source: rec.source || "unknown", sequence: rec.sequence });
+    }
+    return out;
+  }
+
+  function validateCdsShape(dna, requireStop) {
+    const errors = [];
+    const warnings = [];
+    const bad = invalidDnaChars(dna);
+    if (bad.length) {
+      errors.push("invalid DNA characters: " + bad.join(","));
+      return { errors, warnings };
+    }
+    if (dna.length % 3 !== 0) {
+      errors.push(`length ${dna.length} is not a multiple of 3`);
+      return { errors, warnings };
+    }
+    if (dna.length < 6) {
+      errors.push("sequence is too short for a CDS");
+      return { errors, warnings };
+    }
+    if (dna.slice(0, 3) !== "ATG") warnings.push(`start codon is ${dna.slice(0, 3)}, not ATG`);
+    const last = dna.slice(-3);
+    if (!STOP_CODONS.has(last)) {
+      const msg = `terminal codon ${last} is not a stop codon`;
+      if (requireStop) errors.push(msg);
+      else warnings.push(msg);
+    }
+    const codons = splitCodons(dna);
+    const internal = [];
+    for (let i = 0; i < codons.length - 1; i++) {
+      if (STOP_CODONS.has(codons[i])) internal.push(String(i + 1));
+    }
+    if (internal.length) errors.push("internal stop codon at positions " + internal.slice(0, 12).join(","));
+    return { errors, warnings };
+  }
+
+  function buildTarget(records) {
+    if (!records.length) throw new Error("No reference sequence was provided.");
+    const record = records[0];
+    const seq = normalizeSeq(record.sequence);
+    if (!seq) throw new Error("Reference sequence is empty.");
+    const isDna = [...seq].every((c) => DNA_BASES.has(c));
+    if (isDna) {
+      const { errors, warnings } = validateCdsShape(seq, false);
+      if (errors.length) throw new Error("Reference CDS is invalid: " + errors.join("; "));
+      const protein = translateDna(seq).replace(/\*+$/, "");
+      if (protein.includes("*")) throw new Error("Reference CDS contains an internal stop codon.");
+      return {
+        name: record.name,
+        target_protein: protein,
+        original_dna: seq,
+        source_type: "dna",
+        warnings
+      };
+    }
+    const protein = normalizeProtein(seq);
+    const bad = [...protein].filter((c) => !PROTEIN_ALPHABET.has(c));
+    if (bad.length) throw new Error("Reference is neither valid DNA nor valid protein: " + bad.join());
+    if (protein.includes("_")) throw new Error("Reference protein contains an internal stop symbol.");
+    return {
+      name: record.name,
+      target_protein: protein,
+      original_dna: null,
+      source_type: "protein",
+      warnings: []
+    };
+  }
+
+  function caiCsi(dna, lookup) {
+    const logs = [];
+    for (const codon of splitCodons(dna)) {
+      const aa = CODON_TO_AA[codon];
+      if (aa === "M" || aa === "W" || aa === "*") continue;
+      if (lookup[codon]) logs.push(Math.log(Math.max(lookup[codon].relative_adaptiveness, 1e-10)));
+    }
+    if (!logs.length) return NaN;
+    return Math.exp(logs.reduce((a, b) => a + b, 0) / logs.length);
+  }
+
+  function gcPercent(seq) {
+    if (!seq.length) return 0;
+    let g = 0;
+    for (const ch of seq) if (ch === "G" || ch === "C") g++;
+    return (100 * g) / seq.length;
+  }
+
+  function gcByPosition(dna, pos1) {
+    let bases = "";
+    for (let i = pos1 - 1; i < dna.length; i += 3) bases += dna[i] || "";
+    return gcPercent(bases);
+  }
+
+  function cfdPercent(dna, lookup, threshold) {
+    const codons = splitCodons(dna);
+    if (!codons.length) return NaN;
+    let rare = 0;
+    for (const c of codons) {
+      const ra = lookup[c] ? lookup[c].relative_adaptiveness : 0;
+      if (ra < threshold) rare++;
+    }
+    return (100 * rare) / codons.length;
+  }
+
+  function countCodons(dna) {
+    const m = {};
+    for (const c of splitCodons(dna)) {
+      if (CODON_TO_AA[c] === "*") continue;
+      m[c] = (m[c] || 0) + 1;
+    }
+    return m;
+  }
+
+  function rscuDistance(dna, table) {
+    const codonCounts = countCodons(dna);
+    const dists = [];
+    for (const aa of Object.keys(table)) {
+      if (aa === "*") continue;
+      const pairs = table[aa];
+      const codons = pairs.map((p) => p[0]);
+      let total = 0;
+      for (const c of codons) total += codonCounts[c] || 0;
+      if (total === 0) continue;
+      const expected = total / codons.length;
+      for (const [codon, hostFreq] of pairs) {
+        const observedRscu = expected ? (codonCounts[codon] || 0) / expected : 0;
+        const hostRscu = hostFreq * codons.length;
+        dists.push(Math.abs(observedRscu - hostRscu));
+      }
+    }
+    return dists.length ? dists.reduce((a, b) => a + b, 0) / dists.length : NaN;
+  }
+
+  function targetFrequencyDistance(dna, table) {
+    const codonCounts = countCodons(dna);
+    const dists = [];
+    for (const aa of Object.keys(table)) {
+      if (aa === "*") continue;
+      const pairs = table[aa];
+      const codons = pairs.map((p) => p[0]);
+      let total = 0;
+      for (const c of codons) total += codonCounts[c] || 0;
+      if (total === 0) continue;
+      for (const [codon, hostFreq] of pairs) {
+        const observed = (codonCounts[codon] || 0) / total;
+        dists.push(Math.abs(observed - hostFreq));
+      }
+    }
+    return dists.length ? dists.reduce((a, b) => a + b, 0) / dists.length : NaN;
+  }
+
+  function countRestrictionSites(dna) {
+    const hits = [];
+    let sum = 0;
+    for (const [enz, motifs] of Object.entries(RESTRICTION_SITES)) {
+      let t = 0;
+      for (const motif of motifs) {
+        for (let i = 0; i <= dna.length - motif.length; i++) {
+          if (dna.slice(i, i + motif.length) === motif) t++;
+        }
+      }
+      if (t) {
+        hits.push(`${enz}:${t}`);
+        sum += t;
+      }
+    }
+    return [sum, hits];
+  }
+
+  function maxHomopolymer(dna) {
+    let best = 0, cur = 0, prev = "";
+    for (const b of dna) {
+      if (b === prev) cur++;
+      else { cur = 1; prev = b; }
+      best = Math.max(best, cur);
+    }
+    return best;
+  }
+
+  function tandemRepeatHits(dna) {
+    const hits = [];
+    for (let size = 2; size <= 6; size++) {
+      for (let i = 0; i + size * 4 <= dna.length; i++) {
+        const motif = dna.slice(i, i + size);
+        if (!/^[ACGT]+$/.test(motif)) continue;
+        let j = i, reps = 0;
+        while (dna.slice(j, j + size) === motif) { reps++; j += size; }
+        if (reps >= 4) {
+          hits.push(`${motif}x${reps}@${i + 1}`);
+          if (hits.length >= 12) return hits;
+        }
+      }
+    }
+    return hits;
+  }
+
+  function sequenceSimilarity(originalDna, dna) {
+    if (!originalDna || originalDna.length !== dna.length) return [null, null];
+    let ntSame = 0;
+    for (let i = 0; i < dna.length; i++) if (originalDna[i] === dna[i]) ntSame++;
+    const oc = splitCodons(originalDna);
+    const dc = splitCodons(dna);
+    let cSame = 0;
+    for (let i = 0; i < dc.length; i++) if (oc[i] === dc[i]) cSame++;
+    return [(100 * ntSame) / dna.length, (100 * cSame) / dc.length];
+  }
+
+  function rankingScore(metrics) {
+    const cai = parseFloat(metrics.cai_csi) || 0;
+    const cfd = parseFloat(metrics.cfd_percent) || 100;
+    const freqDist = parseFloat(metrics.target_frequency_distance) || 1;
+    const gc = parseFloat(metrics.gc_percent) || ANIGER_CODING_GC;
+    const gc3 = parseFloat(metrics.gc3_percent) || ANIGER_GC3;
+    const restrictionCount = parseInt(metrics.restriction_site_count, 10) || 0;
+    const homopolymer = parseInt(metrics.max_homopolymer, 10) || 0;
+    let score =
+      45 * Math.max(0, Math.min(cai, 1)) +
+      25 * Math.max(0, 1 - cfd / 100) +
+      15 * Math.max(0, 1 - Math.min(freqDist, 1)) +
+      7.5 * Math.max(0, 1 - Math.abs(gc - ANIGER_CODING_GC) / 50) +
+      7.5 * Math.max(0, 1 - Math.abs(gc3 - ANIGER_GC3) / 50);
+    score -= Math.min(10, restrictionCount * 0.5);
+    if (homopolymer >= 8) score -= Math.min(10, (homopolymer - 7) * 2);
+    return Math.round(Math.max(0, Math.min(100, score)) * 1000) / 1000;
+  }
+
+  function computeMetrics(dna, table, originalDna, cfdThreshold) {
+    const lookup = codonLookup(table);
+    const codons = splitCodons(dna);
+    const [ntId, codonId] = sequenceSimilarity(originalDna, dna);
+    const [restrictionCount, restrictionHits] = countRestrictionSites(dna);
+    const repeats = tandemRepeatHits(dna);
+    const rarePositions = [];
+    for (let i = 0; i < codons.length; i++) {
+      const c = codons[i];
+      const ra = lookup[c] ? lookup[c].relative_adaptiveness : 0;
+      if (ra < cfdThreshold) rarePositions.push(String(i + 1));
+    }
+    const metrics = {
+      len_nt: dna.length,
+      codon_count: codons.length,
+      gc_percent: Math.round(gcPercent(dna) * 1000) / 1000,
+      gc1_percent: Math.round(gcByPosition(dna, 1) * 1000) / 1000,
+      gc2_percent: Math.round(gcByPosition(dna, 2) * 1000) / 1000,
+      gc3_percent: Math.round(gcByPosition(dna, 3) * 1000) / 1000,
+      cai_csi: Math.round(caiCsi(dna, lookup) * 1e5) / 1e5,
+      cfd_percent: Math.round(cfdPercent(dna, lookup, cfdThreshold) * 1000) / 1000,
+      rare_codon_count: rarePositions.length,
+      rare_codon_positions: rarePositions.slice(0, 80).join(","),
+      rscu_distance: Math.round(rscuDistance(dna, table) * 1e5) / 1e5,
+      target_frequency_distance: Math.round(targetFrequencyDistance(dna, table) * 1e5) / 1e5,
+      nt_identity_vs_original: ntId == null ? null : Math.round(ntId * 1000) / 1000,
+      codon_identity_vs_original: codonId == null ? null : Math.round(codonId * 1000) / 1000,
+      restriction_site_count: restrictionCount,
+      restriction_sites: restrictionHits.join("; "),
+      max_homopolymer: maxHomopolymer(dna),
+      tandem_repeats: repeats.join("; "),
+      host_reference: "Kazusa Aspergillus niger taxid 5061"
+    };
+    metrics.ranking_score = rankingScore(metrics);
+    return metrics;
+  }
+
+  function firstProteinMismatch(target, observed) {
+    if (target.length !== observed.length)
+      return `target ${target.length} aa, observed ${observed.length} aa`;
+    for (let i = 0; i < target.length; i++) {
+      if (target[i] !== observed[i]) return `aa ${i + 1}: expected ${target[i]}, observed ${observed[i]}`;
+    }
+    return "unknown mismatch";
+  }
+
+  function analyzeCandidate(record, targetProtein, table, originalDna, cfdThreshold, requireStop) {
+    const dna = normalizeSeq(record.sequence);
+    let { errors, warnings } = validateCdsShape(dna, requireStop);
+    let validDna = !errors.length;
+    let protein = "";
+    if (!invalidDnaChars(dna).length && dna.length >= 3 && dna.length % 3 === 0) {
+      protein = translateDna(dna).replace(/\*+$/, "");
+      if (protein.includes("X")) errors.push("unknown codon in translation");
+      if (protein !== targetProtein) errors.push("translated protein does not match target (" + firstProteinMismatch(targetProtein, protein) + ")");
+    } else errors.push("candidate must be a DNA CDS, not a protein sequence");
+    const includedBase = validDna && !errors.length && protein === targetProtein;
+    let included = includedBase;
+    let metrics = {};
+    if (!invalidDnaChars(dna).length && dna.length > 0 && dna.length % 3 === 0) {
+      try {
+        metrics = computeMetrics(dna, table, originalDna, cfdThreshold);
+      } catch (e) {
+        errors.push("metric calculation failed: " + e.message);
+        included = false;
+      }
+    }
+    return {
+      name: record.name,
+      source: record.source,
+      dna,
+      protein,
+      valid_dna: validDna,
+      included,
+      errors,
+      warnings,
+      metrics
+    };
+  }
+
+  function analysisRow(a) {
+    return {
+      name: a.name,
+      source: a.source,
+      included_in_ranking: a.included,
+      valid_dna: a.valid_dna,
+      errors: a.errors.join("; "),
+      warnings: a.warnings.join("; "),
+      ...a.metrics
+    };
+  }
+
+  function bestStopCodon(table) {
+    return table["*"].reduce((best, p) => (p[1] > best[1] ? p : best))[0];
+  }
+
+  function highestFrequencySequence(targetProtein, table) {
+    let s = "";
+    for (const aa of targetProtein) {
+      s += table[aa].reduce((b, p) => (p[1] > b[1] ? p : b))[0];
+    }
+    return s + bestStopCodon(table);
+  }
+
+  function weightedPick(rng, pairs) {
+    const items = pairs.map((p) => p[0]);
+    const weights = pairs.map((p) => p[1]);
+    const sum = weights.reduce((a, b) => a + b, 0);
+    let x = rng() * sum;
+    for (let i = 0; i < items.length; i++) {
+      x -= weights[i];
+      if (x <= 0) return items[i];
+    }
+    return items[items.length - 1];
+  }
+
+  function weightedRandomSequence(targetProtein, table, seed) {
+    const rng = mulberry32(seed >>> 0);
+    let s = "";
+    for (const aa of targetProtein) s += weightedPick(rng, table[aa]);
+    return s + bestStopCodon(table);
+  }
+
+  function balancedSequence(targetProtein, table, seed) {
+    const rng = mulberry32(seed >>> 0);
+    const lookup = codonLookup(table);
+    const chosen = [];
+    let gcCount = 0, gc3Count = 0, totalNt = 0, totalCodons = 0;
+    for (const aa of targetProtein) {
+      const scored = [];
+      for (const [codon, freq] of table[aa]) {
+        const nextGc = gcCount + (codon.match(/G|C/g) || []).length;
+        const nextGc3 = gc3Count + (codon[2] === "G" || codon[2] === "C" ? 1 : 0);
+        const nextNt = totalNt + 3;
+        const nextCodons = totalCodons + 1;
+        const expectedGc = (nextNt * ANIGER_CODING_GC) / 100;
+        const expectedGc3 = (nextCodons * ANIGER_GC3) / 100;
+        const gcDev = Math.abs(nextGc - expectedGc) / 3;
+        const gc3Dev = Math.abs(nextGc3 - expectedGc3);
+        const adapt = lookup[codon].relative_adaptiveness;
+        const rarePenalty = adapt < 0.3 ? 0.35 : 0;
+        const jitter = rng() * 0.015;
+        const score =
+          0.8 * adapt + 0.1 * freq - 0.45 * gcDev - 1.75 * gc3Dev - rarePenalty + jitter;
+        scored.push([score, codon]);
+      }
+      scored.sort((a, b) => b[0] - a[0]);
+      const selected = scored[0][1];
+      chosen.push(selected);
+      gcCount += (selected.match(/G|C/g) || []).length;
+      gc3Count += selected[2] === "G" || selected[2] === "C" ? 1 : 0;
+      totalNt += 3;
+      totalCodons++;
+    }
+    return chosen.join("") + bestStopCodon(table);
+  }
+
+  function generateLocalCandidates(targetProtein, table, seed) {
+    return [
+      { name: "local_highest_frequency", source: "local_hfc", sequence: highestFrequencySequence(targetProtein, table) },
+      { name: "local_weighted_random", source: "local_weighted", sequence: weightedRandomSequence(targetProtein, table, seed) },
+      { name: "local_balanced_gc_gc3", source: "local_balanced", sequence: balancedSequence(targetProtein, table, seed) }
+    ];
+  }
+
+  function codonComparisonLong(analyses, targetProtein, table, originalDna, cfdThreshold) {
+    const lookup = codonLookup(table);
+    const expectedCodons = targetProtein.length + 1;
+    const refCodons =
+      originalDna && originalDna.length === expectedCodons * 3 ? splitCodons(originalDna) : [];
+    const rows = [];
+    for (const a of analyses) {
+      const codons = splitCodons(a.dna);
+      if (codons.length !== expectedCodons) continue;
+      for (let pos = 1; pos <= expectedCodons; pos++) {
+        const codon = codons[pos - 1];
+        const aa = pos === expectedCodons ? "*" : targetProtein[pos - 1];
+        const refC = refCodons[pos - 1] || "";
+        const entry = lookup[codon] || {};
+        rows.push({
+          position: pos,
+          amino_acid: aa,
+          candidate: a.name,
+          source: a.source,
+          codon,
+          reference_codon: refC,
+          same_as_reference: !!(refC && codon === refC),
+          synonymous_with_target: CODON_TO_AA[codon] === aa,
+          host_frequency: entry.frequency != null ? Math.round(entry.frequency * 1e5) / 1e5 : null,
+          relative_adaptiveness:
+            entry.relative_adaptiveness != null ? Math.round(entry.relative_adaptiveness * 1e5) / 1e5 : null,
+          rare: !!(entry.relative_adaptiveness != null && entry.relative_adaptiveness < cfdThreshold),
+          gc3: codon[2] === "G" || codon[2] === "C",
+          included_in_ranking: a.included
+        });
+      }
+    }
+    return rows;
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderHeatmap(analyses, comparisonLong, maxPos) {
+    let includedNames = analyses.filter((a) => a.included).map((a) => a.name);
+    if (!includedNames.length)
+      includedNames = analyses.filter((a) => a.valid_dna).map((a) => a.name).slice(0, 10);
+    const byPos = {};
+    const aaByPos = {};
+    const refByPos = {};
+    for (const row of comparisonLong) {
+      const p = row.position;
+      if (!byPos[p]) byPos[p] = {};
+      byPos[p][row.candidate] = row;
+      aaByPos[p] = row.amino_acid;
+      refByPos[p] = row.reference_codon || "";
+    }
+    const positions = Object.keys(byPos)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .slice(0, maxPos);
+    const headerCells = includedNames.map((n) => `<th>${esc(n)}</th>`).join("");
+    const bodyRows = [];
+    for (const pos of positions) {
+      const cells = [
+        `<td class="pos">${pos}</td>`,
+        `<td>${esc(aaByPos[pos])}</td>`,
+        `<td>${esc(refByPos[pos])}</td>`
+      ];
+      for (const name of includedNames) {
+        const row = byPos[pos] && byPos[pos][name];
+        if (!row) {
+          cells.push(`<td class="missing">-</td>`);
+          continue;
+        }
+        const cls = [];
+        if (row.rare) cls.push("rare");
+        else if (row.same_as_reference) cls.push("same");
+        else cls.push("changed");
+        if (!row.synonymous_with_target) cls.push("bad");
+        const title = row.relative_adaptiveness != null ? `relative adaptiveness=${row.relative_adaptiveness}` : "";
+        cells.push(`<td class="${cls.join(" ")}" title="${esc(title)}">${esc(row.codon)}</td>`);
+      }
+      bodyRows.push(`<tr>${cells.join("")}</tr>`);
+    }
+    return `<div class="codon-map-wrap"><table class="codon-map"><thead><tr><th>Pos</th><th>AA</th><th>Ref</th>${headerCells}</tr></thead><tbody>${bodyRows.join("")}</tbody></table></div>`;
+  }
+
+  function rowsToCsv(rows) {
+    if (!rows.length) return "\ufeff";
+    const fields = [];
+    const seen = new Set();
+    for (const row of rows) {
+      for (const k of Object.keys(row)) {
+        if (!seen.has(k)) {
+          seen.add(k);
+          fields.push(k);
+        }
+      }
+    }
+    const escf = (v) => {
+      const s = v == null ? "" : String(v);
+      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const lines = [fields.join(",")];
+    for (const row of rows) lines.push(fields.map((f) => escf(row[f])).join(","));
+    return "\ufeff" + lines.join("\r\n");
+  }
+
+  function reportJson(target, analyses, comparisonLong) {
+    return JSON.stringify(
+      {
+        host: {
+          name: "Aspergillus niger",
+          taxid: ANIGER_TAXID,
+          genetic_code: GENETIC_CODE,
+          kazusa_coding_gc_percent: ANIGER_CODING_GC,
+          kazusa_gc3_percent: ANIGER_GC3
+        },
+        target: {
+          name: target.name,
+          source_type: target.source_type,
+          protein_length_aa: target.target_protein.length,
+          original_dna_length_nt: target.original_dna ? target.original_dna.length : null,
+          warnings: target.warnings
+        },
+        candidates: analyses.map(analysisRow),
+        comparison_row_count: comparisonLong.length,
+        note: "Generated by aniger_codon_review.html (offline)"
+      },
+      null,
+      2
+    );
+  }
+
+  function recordsToFasta(records) {
+    const lines = [];
+    const w = 70;
+    for (const r of records) {
+      lines.push(`>${r.name} source=${r.source}`);
+      const s = normalizeSeq(r.sequence);
+      for (let i = 0; i < s.length; i += w) lines.push(s.slice(i, i + w));
+    }
+    return lines.join("\n") + "\n";
+  }
+
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function downloadBlob(filename, blob) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  const table = loadAnigerTable();
+  const cfdSlider = document.getElementById("cfdSlider");
+  const cfdVal = document.getElementById("cfdVal");
+  cfdSlider.addEventListener("input", () => {
+    cfdVal.textContent = parseFloat(cfdSlider.value).toFixed(2);
+  });
+
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  let lastState = null;
+
+  function run() {
+    const messages = document.getElementById("messages");
+    messages.innerHTML = "";
+    const push = (cls, html) => {
+      const d = document.createElement("div");
+      d.className = "msg " + cls;
+      d.innerHTML = html;
+      messages.appendChild(d);
+    };
+
+    const refText = document.getElementById("refText").value;
+    const candText = document.getElementById("candText").value;
+    const cfdThreshold = parseFloat(cfdSlider.value);
+    const seed = parseInt(document.getElementById("seedInp").value, 10) || 0;
+    const includeLocal = document.getElementById("chkLocal").checked;
+
+    const readFile = (f) =>
+      new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsText(f, "UTF-8");
+      });
+
+    Promise.resolve()
+      .then(async () => {
+        let refMerged = refText;
+        const rf = document.getElementById("refFile").files[0];
+        if (rf) refMerged = await readFile(rf);
+
+        let candMerged = candText;
+        const cfs = document.getElementById("candFiles").files;
+        for (let i = 0; i < cfs.length; i++) {
+          candMerged += "\n" + (await readFile(cfs[i]));
+        }
+
+        let targetRecords;
+        try {
+          targetRecords = parseTextCandidates(refMerged, "reference");
+          if (!targetRecords.length) throw new Error("原始序列为空");
+        } catch (e) {
+          push("err", "原始/目标序列无法解析：" + esc(e.message));
+          return;
+        }
+
+        let target;
+        try {
+          target = buildTarget(targetRecords);
+        } catch (e) {
+          push("err", esc(e.message));
+          return;
+        }
+
+        push(
+          "ok",
+          `目标蛋白 <strong>${target.target_protein.length}</strong> aa；原始 DNA <strong>${target.original_dna ? target.original_dna.length : "未提供"}</strong> nt`
+        );
+        for (const w of target.warnings) push("warn", esc(w));
+
+        let external = parseTextCandidates(candMerged, "paste");
+        let records = [];
+        if (target.original_dna)
+          records.push({
+            name: (target.name && String(target.name).trim()) || "original_reference",
+            source: "original",
+            sequence: target.original_dna
+          });
+        if (includeLocal) records.push(...generateLocalCandidates(target.target_protein, table, seed));
+        records.push(...external);
+        records = makeUniqueRecords(records);
+
+        const analyses = records.map((rec) =>
+          analyzeCandidate(
+            rec,
+            target.target_protein,
+            table,
+            target.original_dna,
+            cfdThreshold,
+            rec.source !== "original"
+          )
+        );
+
+        const metricRows = analyses.map(analysisRow);
+        const includedRows = metricRows
+          .filter((r) => r.included_in_ranking)
+          .sort((a, b) => (b.ranking_score || 0) - (a.ranking_score || 0));
+        const invalidRows = metricRows.filter((r) => !r.included_in_ranking);
+        const comparisonLong = codonComparisonLong(
+          analyses,
+          target.target_protein,
+          table,
+          target.original_dna,
+          cfdThreshold
+        );
+
+        lastState = { target, analyses, metricRows, includedRows, invalidRows, comparisonLong };
+
+        document.getElementById("t1").innerHTML = `
+          <p>候选总数 <strong>${analyses.length}</strong> · 进入排名 <strong>${includedRows.length}</strong> · 未通过 <strong>${invalidRows.length}</strong></p>
+          <h3 style="margin:0.5rem 0 0.25rem;font-size:1rem;">候选排名</h3>
+          <div class="scroll">${tableHtml(includedRows.length ? includedRows : [{ note: "（无）" }])}</div>
+          ${
+            invalidRows.length
+              ? `<h3 style="margin:0.75rem 0 0.25rem;font-size:1rem;">未通过</h3><div class="scroll">${tableHtml(invalidRows)}</div>`
+              : ""
+          }`;
+
+        document.getElementById("t2").innerHTML =
+          "<h3 style='margin-top:0;font-size:1rem;'>逐位点热图（最多 360 位）</h3>" +
+          renderHeatmap(analyses, comparisonLong, 360);
+
+        document.getElementById("t3").innerHTML =
+          "<h3 style='margin-top:0;font-size:1rem;'>逐密码子长表</h3><div class='scroll'>" +
+          tableHtml(comparisonLong.slice(0, 5000)) +
+          (comparisonLong.length > 5000 ? "<p class='msg warn'>仅显示前 5000 行，请导出 CSV 查看全部。</p>" : "") +
+          "</div>";
+
+        const genFasta = recordsToFasta(
+          analyses.filter((a) => a.included).map((a) => ({ name: a.name, source: a.source, sequence: a.dna }))
+        );
+
+        document.getElementById("t4").innerHTML = `
+          <p>导出文件使用浏览器下载。CSV 带 BOM，Excel 可直接打开。</p>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 0.5rem;">供应商清单与「接口」说明见左侧展开项 <strong>候选来源与外部链接</strong>；完整步骤见同目录 <code>aniger_codon_review_SOP.md</code>（附录 A：Codon_1 示例）。</p>
+          <div class="dl-btns">
+            <button type="button" id="dlMetrics">指标 CSV</button>
+            <button type="button" id="dlLong">逐密码子 CSV</button>
+            <button type="button" id="dlJson">JSON</button>
+            <button type="button" id="dlFasta">通过候选 FASTA</button>
+          </div>`;
+
+        document.getElementById("dlMetrics").onclick = () =>
+          downloadText("aniger_codon_metrics.csv", rowsToCsv(metricRows), "text/csv");
+        document.getElementById("dlLong").onclick = () =>
+          downloadText("aniger_codon_comparison_long.csv", rowsToCsv(comparisonLong), "text/csv");
+        document.getElementById("dlJson").onclick = () =>
+          downloadText("aniger_codon_review.json", reportJson(target, analyses, comparisonLong), "application/json");
+        document.getElementById("dlFasta").onclick = () =>
+          downloadText("aniger_included_candidates.fasta", genFasta, "text/plain");
+      })
+      .catch((e) => push("err", esc(String(e))));
+  }
+
+  function tableHtml(rows) {
+    if (!rows.length) return "<p>（无数据）</p>";
+    const keys = Object.keys(rows[0]);
+    const th = keys.map((k) => `<th>${esc(k)}</th>`).join("");
+    const tr = rows
+      .map((row) => "<tr>" + keys.map((k) => `<td>${esc(row[k])}</td>`).join("") + "</tr>")
+      .join("");
+    return `<table class="data"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+  }
+
+  document.getElementById("btnRun").addEventListener("click", run);
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "taxid": 5061,
+  "species": "Aspergillus niger",
+  "url": "https://www.kazusa.or.jp/codon/cgi-bin/showcodon.cgi?species=5061",
+  "assembly": "",
+  "downloaded_on": "2026-05-14T06:07:50Z",
+  "http_strategy": "http_get",
+  "note": "Kazusa merged species table (GenBank-derived); RNA U->T in codon column. Live HTML via http_get (requests no-proxy × SSL + urllib no-proxy).",
+  "kazusa_fetch_mode": "live"
+}
